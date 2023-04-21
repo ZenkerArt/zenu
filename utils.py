@@ -1,11 +1,31 @@
 import bpy.types
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from . import ZenUtilsPreferences
 
 
-def get_modifier(obj: bpy.types.Object, mod: bpy.types.Modifier):
+def update_window():
+    for region in bpy.context.area.regions:
+        if region.type == 'WINDOW':
+            region.tag_redraw()
+
+
+def get_prefs() -> 'ZenUtilsPreferences':
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[__package__].preferences
+    return addon_prefs
+
+
+def get_modifier(obj: bpy.types.Object, mod: bpy.types.Modifier | str):
     if obj is None:
         return None
 
-    cloth = [i for i in obj.modifiers if isinstance(i, mod)]
+    if isinstance(mod, str):
+        cloth = [i for i in obj.modifiers if i.type == mod]
+    else:
+        cloth = [i for i in obj.modifiers if isinstance(i, mod)]
+
     try:
         return cloth[0]
     except IndexError:

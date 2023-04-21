@@ -4,7 +4,7 @@ import bpy
 class BasePanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Bone'
+    bl_category = 'Zenu'
     bl_context = 'objectmode'
 
     def draw_toggle(self, data, prop: str, text: str = '',

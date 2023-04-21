@@ -1,4 +1,15 @@
-from . import physic_manager, shape_key_viewer, bone, utils_panel, lod_manger
+from . import physic_manager, modifier_search, utils_panel, lod_manger, align_tools
+import bpy
+
+
+class ZenUtilsPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+    physic_groups: bpy.props.CollectionProperty(type=physic_manager.property_groups.PhysicGroup)
+
+    def draw(self, context):
+        layout = self.layout
+        print(__name__)
+
 
 bl_info = {
     "name": "zenu",
@@ -14,16 +25,20 @@ modules = (
     # bone,
     utils_panel,
     physic_manager,
-    shape_key_viewer,
-    lod_manger
+    align_tools,
+    modifier_search,
+    lod_manger,
+    # constraint_manager,
 )
 
 
 def register():
     for i in modules:
         i.register()
+    bpy.utils.register_class(ZenUtilsPreferences)
 
 
 def unregister():
     for i in modules:
         i.unregister()
+    bpy.utils.unregister_class(ZenUtilsPreferences)

@@ -1,5 +1,4 @@
-# TODO: Сделать быстрое создание лоу-поли для мема со скелетом
-# TODO: Быстрое создание иерархий коллекций
+import bmesh
 import bpy
 from bpy.types import Context
 from ..base_panel import BasePanel
@@ -30,16 +29,54 @@ class ZENU_OT_change_display_type(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ZENU_OT_clean_vertex_groups(bpy.types.Operator):
+    bl_label = 'Clean Vertex Group'
+    bl_idname = 'zenu.clean_vertex_group'
+    type: bpy.props.StringProperty()
+
+    @classmethod
+    def poll(cls, context: 'Context'):
+        return context.active_object and isinstance(context.active_object.data, bpy.types.Mesh) and check_mods('o')
+
+    def mesh_analise(self, obj: bpy.types.Object, vertices: bpy.types.MeshVertices):
+        group_indexes = []
+
+        for vert in vertices:
+            for group in vert.groups:
+                group_indexes.append(group.group)
+
+        group_indexes = tuple(set(group_indexes))
+
+        removed = 0
+        groups = [i for i in obj.vertex_groups if i.index not in group_indexes]
+        for group in groups:
+            obj.vertex_groups.remove(group)
+            removed += 1
+        self.report({'INFO'}, f'Removed Groups {removed}')
+
+    def execute(self, context: Context):
+        depsgraph = context.evaluated_depsgraph_get()
+        object_eval = context.active_object.evaluated_get(depsgraph)
+        mesh: bpy.types.Mesh = object_eval.data
+
+        current_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode='OBJECT')
+        self.mesh_analise(context.active_object, mesh.vertices)
+        # bpy.ops.object.mode_set(mode=current_mode)
+        return {'FINISHED'}
+
+
 class ZENU_PT_utils(BasePanel):
     bl_label = 'Utils'
     bl_context = ''
 
     @classmethod
     def poll(cls, context: 'Context'):
-        return check_mods('opes')
+        return check_mods('opesw')
 
     def draw(self, context: Context):
         layout = self.layout
+        layout.operator(ZENU_OT_clean_vertex_groups.bl_idname)
 
 
 class ZENU_PT_object_property(BasePanel):
@@ -78,12 +115,15 @@ class ZENU_PT_object_property(BasePanel):
         col.prop(arm, 'display_type', text='')
         self.draw_toggle(arm, 'show_names', text='Bones Names', layout=col)
         self.draw_toggle(arm, 'show_axes', text='Bones Axis', layout=col)
+        if context.active_pose_bone:
+            col.prop(context.active_pose_bone, "custom_shape", text='')
 
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_utils,
     ZENU_PT_object_property,
     ZENU_OT_change_display_type,
+    ZENU_OT_clean_vertex_groups
 ))
 
 
