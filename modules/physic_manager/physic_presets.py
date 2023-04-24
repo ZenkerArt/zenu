@@ -5,7 +5,7 @@ from typing import Any
 
 import bpy
 
-path = os.path.join(os.path.dirname(__file__), '../assets/physic_presets')
+path = os.path.join(os.path.dirname(__file__), '../../assets/physic_presets')
 
 
 

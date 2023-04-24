@@ -1,6 +1,6 @@
 import bpy
-from ..base_panel import BasePanel
-from ..utils import get_modifier, check_mods
+from ...base_panel import BasePanel
+from ...utils import get_modifier, check_mods
 
 
 def modifier_search():

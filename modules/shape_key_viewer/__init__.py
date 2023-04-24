@@ -1,8 +1,8 @@
 import bpy
 from bpy.types import Context
 from .shape_key_list import ZENU_UL_shape_key_list
-from ..base_panel import BasePanel
-from ..utils import check_mods
+from ...base_panel import BasePanel
+from ...utils import check_mods
 
 
 class ZENU_OT_shape_keys_action(bpy.types.Operator):

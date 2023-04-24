@@ -1,8 +1,8 @@
 import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
-from ..base_panel import BasePanel
-from ..utils import check_mods
+from ...base_panel import BasePanel
+from ...utils import check_mods
 
 types = (
     'CAMERA_SOLVER', 'FOLLOW_TRACK', 'OBJECT_SOLVER', 'COPY_LOCATION', 'COPY_ROTATION', 'COPY_SCALE', 'COPY_TRANSFORMS',

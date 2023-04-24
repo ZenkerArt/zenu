@@ -1,11 +1,11 @@
 import bpy
 import bpy.types
-from ..base_panel import BasePanel
+from ...base_panel import BasePanel
 from .operators import ZENU_OT_physic_bake_object, ZENU_OT_physic_rest_time_object, \
     ZENU_OT_physic_rest_time_scene, ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load, \
     ZENU_OT_physic_create_preset, ZENU_OT_physic_remove_preset
 from .utils import get_cloth
-from ..utils import check_mods, is_mesh
+from ...utils import check_mods, is_mesh
 
 
 class ZENU_UL_physic_groups(bpy.types.UIList):

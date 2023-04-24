@@ -5,7 +5,7 @@ import bpy
 from mathutils import Vector
 from .utils import get_cloth
 from .physic_presets import physic_presets, PhysicPreset, get_current_preset
-from ..utils import update_window
+from ...utils import update_window
 
 
 def bpy_struct_to_dict(struct: bpy.types.bpy_struct,

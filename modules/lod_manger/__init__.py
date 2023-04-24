@@ -2,8 +2,8 @@
 # TODO: Быстрое создание иерархий коллекций
 import bpy
 from bpy.types import Context
-from ..base_panel import BasePanel
-from ..utils import get_modifier, get_collection
+from ...base_panel import BasePanel
+from ...utils import get_modifier, get_collection
 
 LOD_COLLECTION_NAME = 'LOD'
 

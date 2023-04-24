@@ -1,8 +1,7 @@
-import bmesh
 import bpy
 from bpy.types import Context
-from ..base_panel import BasePanel
-from ..utils import check_mods
+from ...base_panel import BasePanel
+from ...utils import check_mods
 
 
 class ZENU_OT_change_display_type(bpy.types.Operator):

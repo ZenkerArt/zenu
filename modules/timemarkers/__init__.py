@@ -1,9 +1,9 @@
 import bmesh
 import bpy
 from bpy.types import Context
-from ..base_panel import BasePanel
-from ..utils import check_mods
-from ..keybindings import keybindings, Keybinding, add_binding
+from ...base_panel import BasePanel
+from ...utils import check_mods
+from ...keybindings import keybindings, Keybinding, add_binding
 
 
 class ZENU_UL_physic_groups(bpy.types.UIList):
