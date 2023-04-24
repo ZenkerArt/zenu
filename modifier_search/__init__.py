@@ -1,6 +1,6 @@
 import bpy
 from ..base_panel import BasePanel
-from ..utils import get_modifier
+from ..utils import get_modifier, check_mods
 
 
 def modifier_search():
@@ -25,7 +25,7 @@ class ZENU_UL_modifier_groups(bpy.types.UIList):
     def draw_item(self, context, layout, data, item: bpy.types.Object, icon, active_data, active_propname):
         layout.prop(item, 'name', emboss=False, text='')
         row = layout.row(align=True)
-        cloth = get_modifier(item, bpy.types.SubsurfModifier)
+        cloth = get_modifier(item, context.scene.modifier_search)
 
         row.prop(cloth, 'show_render', text='')
         row.prop(cloth, 'show_viewport', text='')
@@ -47,6 +47,11 @@ class ZENU_UL_modifier_groups(bpy.types.UIList):
 
 class ZENU_PT_modifier(BasePanel):
     bl_label = 'Modifier Search'
+    bl_context = ''
+
+    @classmethod
+    def poll(cls, context: 'Context'):
+        return check_mods('ope')
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout

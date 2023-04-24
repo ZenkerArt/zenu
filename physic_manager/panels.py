@@ -5,7 +5,7 @@ from .operators import ZENU_OT_physic_bake_object, ZENU_OT_physic_rest_time_obje
     ZENU_OT_physic_rest_time_scene, ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load, \
     ZENU_OT_physic_create_preset, ZENU_OT_physic_remove_preset
 from .utils import get_cloth
-from ..utils import check_mods
+from ..utils import check_mods, is_mesh
 
 
 class ZENU_UL_physic_groups(bpy.types.UIList):
@@ -45,7 +45,7 @@ class ZENU_PT_physic(BasePanel):
 
         row = layout.row()
         row.scale_y = 1.5
-        if not cloth:
+        if not cloth and is_mesh(context.active_object):
             mod = row.operator('object.modifier_add', text='Add Physic')
             mod.type = 'CLOTH'
 

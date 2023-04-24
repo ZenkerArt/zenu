@@ -15,7 +15,6 @@ class ZENU_OT_align(bpy.types.Operator):
     def execute(self, context: Context):
         cord = self.coordinate
         sort = context.scene.align_cord
-        invert = False
         objects = []
 
         min_obj: bpy.types.Object = context.active_object
@@ -37,7 +36,6 @@ class ZENU_OT_align(bpy.types.Operator):
             objects.remove(max_obj)
         except ValueError:
             pass
-
         objects = sorted(objects, key=lambda i: getattr(i.location, sort))
 
         max_pos = getattr(max_obj.location, cord)
@@ -74,7 +72,7 @@ class ZENU_PT_align_tools(BasePanel):
 
     def draw(self, context: Context):
         col = self.layout.column_flow(align=True)
-        col.prop(context.scene, 'align_cord', text='')
+        col.row().prop(context.scene, 'align_cord', expand=True)
 
         row = col.row(align=True)
 

@@ -59,6 +59,10 @@ def check_mods(mods: str):
     return any(bpy.context.object.mode == mod for mod in args)
 
 
+def is_mesh(obj: bpy.types.Object):
+    return obj and obj.data and isinstance(obj.data, bpy.types.Mesh)
+
+
 class Mods:
     p: str = 'POSE'
     w: str = 'WEIGHT_PAINT'

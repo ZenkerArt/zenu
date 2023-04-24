@@ -104,17 +104,24 @@ class ZENU_PT_object_property(BasePanel):
         wire = col.row(align=True)
         ZENU_OT_change_display_type.button(wire, 'WIRE')
         ZENU_OT_change_display_type.button(wire, 'TEXTURED')
+        self.draw_toggle(context.space_data.overlay, 'show_face_orientation', text='Face Orientation',
+                         layout=col, invert_icon=True)
 
         self.draw_arm(context)
 
     def draw_arm(self, context: Context):
         arm = context.active_object.data
+
         if not isinstance(arm, bpy.types.Armature):
             return
         col = self.layout.column_flow(align=True)
         col.prop(arm, 'display_type', text='')
         self.draw_toggle(arm, 'show_names', text='Bones Names', layout=col)
         self.draw_toggle(arm, 'show_axes', text='Bones Axis', layout=col)
+
+        col.row().prop(arm, "pose_position", expand=True)
+        # col
+
         if context.active_pose_bone:
             col.prop(context.active_pose_bone, "custom_shape", text='')
 
