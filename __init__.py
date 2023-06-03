@@ -1,4 +1,5 @@
 from .modules import modules
+from .keybindings import key_spaces
 import bpy
 
 bl_info = {
@@ -21,12 +22,18 @@ class ZenUtilsPreferences(bpy.types.AddonPreferences):
 
 
 def register():
+    for i in key_spaces:
+        i.register()
+
     for i in modules:
         i.register()
     bpy.utils.register_class(ZenUtilsPreferences)
 
 
 def unregister():
+    for i in key_spaces:
+        i.unregister()
+
     for i in modules:
         i.unregister()
     bpy.utils.unregister_class(ZenUtilsPreferences)

@@ -1,9 +1,9 @@
-import bmesh
+import math
+
 import bpy
 from bpy.types import Context
 from ...base_panel import BasePanel
-from ...utils import check_mods
-from ...keybindings import keybindings, Keybinding, add_binding
+from ...keybindings import dopesheet, graph_editor
 
 
 class ZENU_UL_physic_groups(bpy.types.UIList):
@@ -14,7 +14,7 @@ class ZENU_UL_physic_groups(bpy.types.UIList):
 class ZENU_OT_time_create_spaces(bpy.types.Operator):
     bl_label = 'Time Create Spaces'
     bl_idname = 'zenu.time_create_spaces'
-    bl_options = {'UNDO', 'GRAB_CURSOR', 'BLOCKING'}
+    bl_options = {'UNDO', 'UNDO_GROUPED', 'GRAB_CURSOR', 'BLOCKING'}
     value: int
     _spaces: int = 4
 
@@ -29,20 +29,26 @@ class ZENU_OT_time_create_spaces(bpy.types.Operator):
         self._spaces = value
 
     def execute(self, context: bpy.types.Context):
-        end_frame = 5 * int((self.value - self.init_loc_x) / 25)
         current_frame = context.scene.frame_current
+        end_frame = current_frame + 5 * int((self.value - self.init_loc_x) / 25)
         spaces = self.spaces
 
         scene = context.scene
 
         space_length = (end_frame - current_frame) / spaces
+        view = 0
+        for i in range(1, spaces):
+            view = int(space_length * i)
 
-        for i in range(spaces):
-            view = int(space_length * i) + 1
             keyframe = int(space_length * i) + context.scene.frame_current
+            if current_frame == 1:
+                keyframe -= 1
+
             scene.timeline_markers.new(f'SP_{view}', frame=keyframe)
 
-        scene.timeline_markers.new(f'SP_{end_frame}', frame=end_frame)
+        scene.timeline_markers.new(f'SP_1', frame=current_frame)
+        scene.timeline_markers.new(f'SP_{math.ceil(view + space_length)}',
+                                   frame=end_frame - 1 if current_frame == 1 else end_frame)
 
         return {'FINISHED'}
 
@@ -104,19 +110,20 @@ reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_time_markers,
 ))
 
-def register():
-    key_config = bpy.context.window_manager.keyconfigs.addon
-    if key_config:
-        key_map = key_config.keymaps.new(name='3D View', space_type='VIEW_3D')
-        key_entry = key_map.keymap_items.new(ZENU_OT_time_create_spaces.bl_idname,
-                                             type='W',
-                                             value='PRESS',
-                                             # ctrl=True,
-                                             )
 
-        add_binding(key_entry)
+def register():
+    dopesheet.new(ZENU_OT_time_create_spaces.bl_idname, type='W', value='PRESS')
+    graph_editor.new(ZENU_OT_time_create_spaces.bl_idname, type='W', value='PRESS')
     reg()
 
 
 def unregister():
     unreg()
+
+
+class ZENU_OT_time_create_spaces(bpy.types.Operator):
+    bl_label = 'Time Create Spaces'
+    bl_idname = 'zenu.time_create_spaces'
+
+    def execute(self, context: bpy.types.Context):
+        return {'FINISHED'}

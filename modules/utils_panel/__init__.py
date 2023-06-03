@@ -11,6 +11,9 @@ class ZENU_OT_change_display_type(bpy.types.Operator):
 
     @staticmethod
     def button(layout: bpy.types.UILayout, ty: str, text: str = None):
+        if not bpy.context or not bpy.context.active_object:
+            return
+
         text = text or ty.title()
         layout.operator(ZENU_OT_change_display_type.bl_idname,
                         depress=ty == bpy.context.active_object.display_type,
@@ -98,8 +101,10 @@ class ZENU_PT_object_property(BasePanel):
         self.draw_toggle(context.active_object, 'show_in_front', text='In Front', layout=col, invert_icon=True)
         if is_geometry or is_dupli:
             self.draw_toggle(obj, "show_wire", text='Wire', layout=col, invert_icon=True)
+
         if obj.mode == 'EDIT':
             self.draw_toggle(context.space_data.overlay, 'show_weight', text='Weights', layout=col, invert_icon=True)
+
         wire = col.row(align=True)
         ZENU_OT_change_display_type.button(wire, 'WIRE')
         ZENU_OT_change_display_type.button(wire, 'TEXTURED')
@@ -127,7 +132,6 @@ class ZENU_PT_object_property(BasePanel):
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_utils,
-    ZENU_PT_object_property,
     ZENU_OT_change_display_type,
     ZENU_OT_clean_vertex_groups
 ))

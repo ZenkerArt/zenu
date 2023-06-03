@@ -63,6 +63,10 @@ def is_mesh(obj: bpy.types.Object):
     return obj and obj.data and isinstance(obj.data, bpy.types.Mesh)
 
 
+def is_type(obj: bpy.types.Object, type: bpy.types.AnyType):
+    return obj and obj.data and isinstance(obj.data, type)
+
+
 class Mods:
     p: str = 'POSE'
     w: str = 'WEIGHT_PAINT'
