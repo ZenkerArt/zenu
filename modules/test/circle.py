@@ -1,7 +1,7 @@
 from mathutils import Matrix
 
 
-def draw_circle_2d(position, color, radius, *, segments=None, mat=Matrix.Identity(4)):
+def draw_circle(position, color, radius, *, segments=None, mat=Matrix.Identity(4)):
     from math import sin, cos, pi, ceil, acos
     import gpu
     from gpu.types import (
