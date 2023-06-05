@@ -30,6 +30,8 @@ class Draw:
     _b: Vector = Vector((0, 0, 0))
     _c: Vector = Vector((0, 0, 0))
     _length: float = 0
+    _k: float = 0
+    _ka: float = 0
     vectors: list[Vector]
     drawer_2d: Draw2D
     drawer_3d: Draw3D
@@ -69,8 +71,7 @@ class Draw:
                             pos
                         )
 
-    def _draw_point(self, pos: Vector, text: str):
-        color = (1, 1, 0)
+    def _draw_point(self, pos: Vector, text: str, color=(1, 1, 0)):
         self.drawer_2d.draw_circle(pos, radius=20, color=color)
         self.drawer_2d.draw_text(pos - Vector((40, 0)), text, color=color)
 
@@ -84,11 +85,29 @@ class Draw:
         dist_b: float = bpy.context.scene.zenu_curve_point_b.distance
         dist_c: float = bpy.context.scene.zenu_curve_point_c.distance
 
+        radius_a = 0
+        radius_b = 0
+        radius_c = 0
+
+        if bpy.context.object or isinstance(bpy.context.object.data, bpy.types.Curve):
+            curve = bpy.context.object.data
+            size = curve.bevel_depth
+            spline = bpy.context.object.data.splines.active
+
+            radius_a = (size * spline.bezier_points[0].radius) * 1000
+            radius_b = (size * spline.bezier_points[1].radius) * 1000
+            radius_c = (size * spline.bezier_points[2].radius) * 1000
+
+        text_left = Vector((0, a.y))
+        self.drawer_2d.draw_text(text_left - Vector((-400, 0)), f'L = {self._length * 1000:.2f} mm')
+        self.drawer_2d.draw_text(text_left - Vector((-400, 30)), f'K = {self._k:.2f}(A = {self._ka:.2f})')
+
         self.drawer_2d.draw_circle(c, radius=20)
-        self.drawer_2d.draw_text(text_pos, f'{round(math.degrees(point_c.angle), 2)} °')
-        self._draw_point(a, 'A')
-        self._draw_point(b, f'B{" " * 14}L = {self._length * 1000:.2f} mm, K = {self._k:.2f}')
-        self._draw_point(c, 'C')
+        self.drawer_2d.draw_text(text_pos + Vector((0, 20)), f'{round(math.degrees(point_c.angle), 2)} °')
+        self._draw_point(a, f'A{" " * 10}R = {radius_a:.2f} mm', color=(.99609375, .53125, .52734375))
+        self._draw_point(b, f'B{" " * 14}R = {radius_b:.2f} mm', color=(.8671875, .875, 1))
+        self._draw_point(c, f'C{" " * 10}R = {radius_c:.2f} mm', color=(0, 1, 0))
+
         self.drawer_2d.draw_text(lerp(a, b, .5), f'{" " * 10}{dist_b * 1000:.2f} mm')
         self.drawer_2d.draw_text(lerp(b, c, .5), f'{" " * 10}{dist_c * 1000:.2f} mm')
 
@@ -111,6 +130,7 @@ class Draw:
         points = spline.bezier_points
 
         sum_k = 0
+        sum_ka = 0
         sum_count = 0
 
         for index, i in enumerate(points):
@@ -126,13 +146,15 @@ class Draw:
                 (p2[0], p2[2]),
                 (p3[0], p3[2]),
             )))
-            k, c = bezier_draw(curve, self.drawer_3d, scale=bpy.context.scene.zenu_curve_comb_scale,
-                            steps=bpy.context.scene.zenu_curve_comb_steps)
+            k, ka, c = bezier_draw(curve, self.drawer_3d, scale=bpy.context.scene.zenu_curve_comb_scale,
+                                   steps=bpy.context.scene.zenu_curve_comb_steps)
             sum_count += c
             sum_k += k
+            sum_ka += ka
 
         self._length = spline.calc_length()
         self._k = sum_k / sum_count
+        self._ka = sum_ka / sum_count
 
     def _draw(self):
         pointB = bpy.context.scene.zenu_curve_point_b
@@ -159,7 +181,7 @@ class Draw:
             point_a, point_b,
             point_b, point_b + v3,
             point_b, point_b + v4
-        ])
+        ], color=(.26171875, .546875, .828125))
         self._draw_curve_comb()
         self._move_spline()
 
@@ -299,7 +321,7 @@ class ZENU_PT_curvature_creator_curve(BasePanel):
         col.prop(context.scene, 'zenu_curve_comb_show', icon='RESTRICT_VIEW_ON')
         col.prop(context.scene, 'zenu_curve_comb_steps', slider=True)
         col.prop(context.scene, 'zenu_curve_comb_scale', slider=True)
-
+        col.prop(context.scene, 'zenu_active_curve_bevel', slider=True)
 
 class CurvePointInfo(bpy.types.PropertyGroup):
     distance: bpy.props.FloatProperty(name='Distance', soft_min=.01, soft_max=.05, subtype='DISTANCE')
@@ -317,6 +339,13 @@ reg, unreg = bpy.utils.register_classes_factory((
 draw = Draw()
 
 
+def update_curve_radius(self, context: bpy.types.Context):
+    if bpy.context.object is None or not isinstance(bpy.context.object.data, bpy.types.Curve):
+        return
+    curve_data = bpy.context.object.data
+    curve_data.bevel_depth = context.scene.zenu_active_curve_bevel
+
+
 def register():
     global draw
     reg()
@@ -328,12 +357,15 @@ def register():
 
     bpy.types.Scene.zenu_circle_radius = bpy.props.FloatProperty(name='Circle Radius', soft_min=.01, soft_max=.05,
                                                                  subtype='DISTANCE', default=.01)
-    bpy.types.Scene.zenu_curve_comb_steps = bpy.props.IntProperty(name='Comb Steps', min=1, soft_max=100,
-                                                                  subtype='DISTANCE', default=25)
-    bpy.types.Scene.zenu_curve_comb_scale = bpy.props.FloatProperty(name='Comb Scale', min=.000001, soft_max=.00008,
+    bpy.types.Scene.zenu_curve_comb_steps = bpy.props.IntProperty(name='Comb Steps', min=1, soft_max=100, default=50)
+    bpy.types.Scene.zenu_curve_comb_scale = bpy.props.FloatProperty(name='Comb Scale', min=.1 / 1000, soft_max=2 / 1000,
                                                                     subtype='DISTANCE', default=.00005)
 
     bpy.types.Scene.zenu_curve_comb_show = bpy.props.BoolProperty(name='Comb Show', default=False)
+
+    bpy.types.Scene.zenu_active_curve_bevel = bpy.props.FloatProperty(name='Curve Radius', soft_min=.1 / 1000,
+                                                                      soft_max=10 / 1000, update=update_curve_radius,
+                                                                      subtype='DISTANCE')
 
 
 def unregister():

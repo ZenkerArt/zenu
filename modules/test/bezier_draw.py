@@ -1,3 +1,5 @@
+import math
+
 from mathutils import Vector
 from .bezier import Bezier
 from .draw_3d import Draw3D
@@ -18,6 +20,7 @@ def bezier_draw(curve: Bezier, drawer: Draw3D, scale: float = 5, steps: int = 25
         coords.append(p)
 
     k = 0
+    ka = 0
     count = 1
     for i in range(0, steps + 1):
         t = i * (1 / steps)
@@ -31,10 +34,12 @@ def bezier_draw(curve: Bezier, drawer: Draw3D, scale: float = 5, steps: int = 25
         coords_comb_line.append(pn)
 
         k += c
+        ka += math.fabs(c)
         count += 1
 
-    drawer.draw_lines(coords, type='LINE_STRIP', color=(.8, .8, .8))
-    drawer.draw_lines(coords_comb, type='LINE_STRIP', color=(1, 1, 1))
-    drawer.draw_lines(coords_comb_line, color=(.5, .5, .5))
+    color = (.26171875, .546875, .828125)
+    drawer.draw_lines(coords, type='LINE_STRIP', color=(.82421875, .453125, .12109375))
+    drawer.draw_lines(coords_comb, type='LINE_STRIP', color=color)
+    drawer.draw_lines(coords_comb_line, color=(.7, .7, .7))
 
-    return k, count
+    return k, ka, count
