@@ -24,29 +24,24 @@ class Draw:
     _is_enable: bool = False
     _render: Any = None
     _render_pixel: Any = None
-    _shader: Any = None
-    _shader2d: Any = None
     _font: int = 0
     _text_pos: Vector
     _a: Vector = Vector((0, 0, 0))
     _b: Vector = Vector((0, 0, 0))
     _c: Vector = Vector((0, 0, 0))
-    obj: bpy.types.Object = None
+    _length: float = 0
     vectors: list[Vector]
-
     drawer_2d: Draw2D
     drawer_3d: Draw3D
 
     def __init__(self):
         self.drawer_2d = Draw2D()
         self.drawer_3d = Draw3D()
-        self._shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-        self._shader2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
         self._text_pos = Vector((0, 0, 0))
         self.vectors = []
 
     def angle_to_vector(self, angle: float, dist: float):
-        return Vector(((math.sin(angle) / math.pi) * dist, 0, (math.cos(angle) / math.pi) * dist))
+        return Vector(((math.sin(angle)) * dist, 0, (math.cos(angle)) * dist))
 
     def calc(self, point, start: Vector, target: Vector) -> tuple[Vector, float]:
         edge_angle = math.atan2(target.x - start.x, target.z - start.z)
@@ -85,11 +80,17 @@ class Draw:
         a = self.get_pos_on_screen(self._a)
         b = self.get_pos_on_screen(self._b)
         c = self.get_pos_on_screen(self._c)
+
+        dist_b: float = bpy.context.scene.zenu_curve_point_b.distance
+        dist_c: float = bpy.context.scene.zenu_curve_point_c.distance
+
         self.drawer_2d.draw_circle(c, radius=20)
         self.drawer_2d.draw_text(text_pos, f'{round(math.degrees(point_c.angle), 2)} °')
         self._draw_point(a, 'A')
-        self._draw_point(b, 'B')
+        self._draw_point(b, f'B{" " * 14}L = {self._length * 1000:.2f} mm, K = {self._k:.2f}')
         self._draw_point(c, 'C')
+        self.drawer_2d.draw_text(lerp(a, b, .5), f'{" " * 10}{dist_b * 1000:.2f} mm')
+        self.drawer_2d.draw_text(lerp(b, c, .5), f'{" " * 10}{dist_c * 1000:.2f} mm')
 
     def _move_spline(self):
         if bpy.context.object is None or not isinstance(bpy.context.object.data, bpy.types.Curve):
@@ -99,7 +100,6 @@ class Draw:
         points[0].co = self._a
         points[1].co = self._b
         points[2].co = self._c
-        self.drawer_3d.draw_circle(Vector((0, 0, 0)), radius=.01)
 
     def _draw_curve_comb(self):
         if bpy.context.object is None or not isinstance(bpy.context.object.data, bpy.types.Curve):
@@ -107,8 +107,11 @@ class Draw:
 
         if not bpy.context.scene.zenu_curve_comb_show:
             return
+        spline = bpy.context.object.data.splines.active
+        points = spline.bezier_points
 
-        points = bpy.context.object.data.splines.active.bezier_points
+        sum_k = 0
+        sum_count = 0
 
         for index, i in enumerate(points):
             if index + 1 >= len(points):
@@ -123,8 +126,13 @@ class Draw:
                 (p2[0], p2[2]),
                 (p3[0], p3[2]),
             )))
-            bezier_draw(curve, self.drawer_3d, scale=bpy.context.scene.zenu_curve_comb_scale,
-                        steps=bpy.context.scene.zenu_curve_comb_steps)
+            k, c = bezier_draw(curve, self.drawer_3d, scale=bpy.context.scene.zenu_curve_comb_scale,
+                            steps=bpy.context.scene.zenu_curve_comb_steps)
+            sum_count += c
+            sum_k += k
+
+        self._length = spline.calc_length()
+        self._k = sum_k / sum_count
 
     def _draw(self):
         pointB = bpy.context.scene.zenu_curve_point_b
@@ -136,7 +144,6 @@ class Draw:
 
         v3, edge_angle = self.calc(pointC, point_a, point_b)
         point_c = point_b + v3
-
         v4 = self.angle_to_vector(edge_angle, pointC.distance)
 
         circle_p1 = point_b + self.angle_to_vector(edge_angle, circle_radius)
