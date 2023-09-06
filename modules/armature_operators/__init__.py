@@ -1,6 +1,6 @@
 import bpy
 from ...utils import is_type
-
+from . import selection
 
 class ZENU_OT_align_bone(bpy.types.Operator):
     bl_label = 'Align Bone'
@@ -20,6 +20,7 @@ class ZENU_OT_align_bone(bpy.types.Operator):
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_align_bone,
+    *selection.classes
 ))
 
 

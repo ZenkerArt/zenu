@@ -1,8 +1,8 @@
 from . import align_tools, timemarkers, \
     physic_manager, modifier_search, \
     lod_manger, utils_panel, \
-    context_pie, armature_operators, \
-    test, shape_key_bind
+    context_pie_new, armature_operators, \
+    shape_key_bind, intersection_tester
 
 modules = (
     utils_panel,
@@ -11,8 +11,8 @@ modules = (
     modifier_search,
     timemarkers,
     lod_manger,
-    context_pie,
+    context_pie_new,
     armature_operators,
     shape_key_bind,
-    test
+    intersection_tester
 )

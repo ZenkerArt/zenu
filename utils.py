@@ -18,6 +18,13 @@ def get_prefs() -> 'ZenUtilsPreferences':
 
 
 def get_modifier(obj: bpy.types.Object, mod: bpy.types.Modifier | str):
+    try:
+        return get_all_modifiers(obj, mod)[0]
+    except IndexError:
+        return None
+
+
+def get_all_modifiers(obj: bpy.types.Object, mod: bpy.types.Modifier | str):
     if obj is None:
         return None
 
@@ -26,10 +33,7 @@ def get_modifier(obj: bpy.types.Object, mod: bpy.types.Modifier | str):
     else:
         cloth = [i for i in obj.modifiers if isinstance(i, mod)]
 
-    try:
-        return cloth[0]
-    except IndexError:
-        return None
+    return cloth
 
 
 def get_collection(name: str, color: str = 'COLOR_04'):
@@ -64,6 +68,9 @@ def is_mesh(obj: bpy.types.Object):
 
 
 def is_type(obj: bpy.types.Object, type: bpy.types.AnyType):
+    if not isinstance(obj, bpy.types.Object):
+        return isinstance(obj, type)
+
     return obj and obj.data and isinstance(obj.data, type)
 
 
