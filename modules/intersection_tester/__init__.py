@@ -91,6 +91,8 @@ class ZENU_OT_test_intersection_all(bpy.types.Operator):
         return context.active_object and isinstance(context.active_object.data, bpy.types.Mesh)
 
     def execute(self, context: Context):
+        bpy.ops.object.select_all(action='DESELECT')
+
         for i in bpy.data.objects:
             for j in bpy.data.objects:
                 if j.name == i.name: continue
