@@ -1,6 +1,8 @@
 # TODO: Сделать быстрое создание лоу-поли для мема со скелетом
 # TODO: Быстрое создание иерархий коллекций
 import math
+import threading
+from functools import partial
 from typing import List, Any
 
 import numpy
@@ -104,14 +106,16 @@ class ZENU_OT_test_intersection_all(bpy.types.Operator):
     bl_label = 'Test Intersection All'
     bl_idname = 'zenu.test_intersection_all'
     bl_options = {"UNDO"}
+    use_thread: bpy.props.BoolProperty()
+    progress = 0
+    selects = []
 
     @classmethod
     def poll(cls, context: 'Context'):
         return context.active_object and isinstance(context.active_object.data, bpy.types.Mesh)
 
-    def execute(self, context: Context):
-        cash.clear()
-        bpy.ops.object.select_all(action='DESELECT')
+    def select(self):
+        self.progress = 0
 
         for i in bpy.data.objects:
             bounding = get_object_bounding(i)
@@ -119,7 +123,34 @@ class ZENU_OT_test_intersection_all(bpy.types.Operator):
                 if j.name == i.name: continue
 
                 if intersect(get_object_bounding(j), bounding):
-                    j.select_set(True)
+                    self.selects.append(j)
+                self.progress += 1
+        self.progress = -1
+
+    def show_progress(self, area):
+        if self.progress == -1:
+            area.header_text_set(None)
+            for i in self.selects:
+                i.select_set(True)
+            return
+        percent = (self.progress / (len(bpy.data.objects) * (len(bpy.data.objects) - 1))) * 100
+        area.header_text_set(f'Progress {percent:.2f}%')
+        return .1
+
+    def execute(self, context: Context):
+        cash.clear()
+        self.selects.clear()
+
+        if self.use_thread:
+            bpy.app.timers.register(partial(self.show_progress, bpy.context.area))
+            bpy.ops.object.select_all(action='DESELECT')
+            th = threading.Thread(target=self.select)
+            th.start()
+            return {'FINISHED'}
+        else:
+            self.select()
+            for i in self.selects:
+                i.select_set(True)
 
         return {'FINISHED'}
 
@@ -184,6 +215,7 @@ class ZENU_PT_test_intersection(BasePanel):
         layout = self.layout
         layout.operator(ZENU_OT_test_intersection.bl_idname)
         layout.operator(ZENU_OT_test_intersection_all.bl_idname)
+        layout.operator(ZENU_OT_test_intersection_all.bl_idname, text="Test Intersection All Thread").use_thread = True
         layout.operator(ZENU_OT_test_intersection_in_selection.bl_idname)
         layout.operator(ZENU_OT_test_intersection_all_same_bounds.bl_idname)
 
