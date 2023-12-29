@@ -10,15 +10,17 @@ class ZENU_OT_select_parent_objects(bpy.types.Operator):
     def poll(cls, context: bpy.types.Context):
         state = True
 
-        for selected_object in context.selected_objects:
+        try:
+            for selected_object in context.selected_objects:
 
-            for obj in bpy.data.objects:
-                if not is_type(obj, bpy.types.Mesh):
-                    continue
+                for obj in bpy.data.objects:
+                    if not is_type(obj, bpy.types.Mesh):
+                        continue
 
-                mod: list[bpy.types.ArmatureModifier] = get_modifier(obj, bpy.types.ArmatureModifier)
-                state = state and mod.object.data == selected_object.data and mod is not None
-                # if :
+                    mod: list[bpy.types.ArmatureModifier] = get_modifier(obj, bpy.types.ArmatureModifier)
+                    state = state and mod.object.data == selected_object.data and mod is not None
+        except Exception:
+            return False
 
         return not is_type(context.object, bpy.types.Mesh) and state
 
@@ -46,12 +48,15 @@ class ZENU_OT_select_bones(bpy.types.Operator):
     def poll(cls, context: bpy.types.Context):
         state = True
 
-        for obj in context.selected_objects:
-            if not is_type(obj, bpy.types.Mesh):
-                continue
+        try:
+            for obj in context.selected_objects:
+                if not is_type(obj, bpy.types.Mesh):
+                    continue
 
-            mods: bpy.types.ArmatureModifier = get_all_modifiers(obj, bpy.types.ArmatureModifier)
-            state = state and mods
+                mods: bpy.types.ArmatureModifier = get_all_modifiers(obj, bpy.types.ArmatureModifier)
+                state = state and mods
+        except Exception:
+            return False
 
         return is_type(context.object, bpy.types.Mesh) and state and check_mods('o')
 

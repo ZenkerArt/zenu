@@ -1,8 +1,30 @@
+import json
+
 import bpy
 from bpy.types import Context
 from ...base_panel import BasePanel
 from ...utils import check_mods
 
+
+def point_cloud(ob_name, coords, edges=[], faces=[]):
+    """Create point cloud object based on given coordinates and name.
+
+    Keyword arguments:
+    ob_name -- new object name
+    coords -- float triplets eg: [(-1.0, 1.0, 0.0), (-1.0, -1.0, 0.0)]
+    """
+
+    # Create new mesh and a new object
+    me = bpy.data.meshes.new(ob_name + "Mesh")
+    ob = bpy.data.objects.new(ob_name, me)
+
+    # Make a mesh from a list of vertices/edges/faces
+    me.from_pydata(coords, edges, faces)
+
+    # Display name and update the mesh
+    ob.show_name = True
+    me.update()
+    return ob
 
 class ZENU_OT_change_display_type(bpy.types.Operator):
     bl_label = 'Change Display Type'
@@ -30,6 +52,32 @@ class ZENU_OT_change_display_type(bpy.types.Operator):
         context.active_object.display_type = self.type
         return {'FINISHED'}
 
+
+class ZENU_OT_test_import(bpy.types.Operator):
+    bl_label = 'Test Import'
+    bl_idname = 'zenu.test_import'
+    type: bpy.props.StringProperty()
+
+    def execute(self, context: Context):
+        with open(r'C:\Users\zenke\Desktop\Projects\scan\output.txt', 'r') as filehandle:
+            arr = json.load(filehandle)
+
+        mesh = []
+        length = len(arr)
+        for i in arr:
+            index, locations = i
+            for location in locations:
+                mesh.append((location[0], location[1], 0.0025 * index))
+
+            print(f'Import frame {index} / {length}')
+
+        # Create the object
+        pc = point_cloud("point-cloud", mesh)
+
+        # Link object to the active collection
+        bpy.context.collection.objects.link(pc)
+
+        return {'FINISHED'}
 
 class ZENU_OT_clean_vertex_groups(bpy.types.Operator):
     bl_label = 'Clean Vertex Group'
@@ -79,6 +127,7 @@ class ZENU_PT_utils(BasePanel):
     def draw(self, context: Context):
         layout = self.layout
         layout.operator(ZENU_OT_clean_vertex_groups.bl_idname)
+        layout.operator(ZENU_OT_test_import.bl_idname)
 
 
 class ZENU_PT_object_property(BasePanel):
@@ -133,7 +182,8 @@ class ZENU_PT_object_property(BasePanel):
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_utils,
     ZENU_OT_change_display_type,
-    ZENU_OT_clean_vertex_groups
+    ZENU_OT_clean_vertex_groups,
+    ZENU_OT_test_import
 ))
 
 

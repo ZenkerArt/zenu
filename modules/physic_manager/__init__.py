@@ -8,7 +8,7 @@ reg, unreg = bpy.utils.register_classes_factory((
     *panels.classes,
 ))
 
-
+  
 def on_update_active_physic(self, context: bpy.types.Context):
     index: int = self.physic_group_active
     bpy.ops.object.select_all(action='DESELECT')
@@ -31,4 +31,4 @@ def register():
 
 
 def unregister():
-    unreg()
+    unreg() 

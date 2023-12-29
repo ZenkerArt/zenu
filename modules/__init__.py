@@ -2,7 +2,7 @@ from . import align_tools, timemarkers, \
     physic_manager, modifier_search, \
     lod_manger, utils_panel, \
     context_pie_new, armature_operators, \
-    shape_key_bind, intersection_tester
+    shape_key_bind, intersection_tester, physic
 
 modules = (
     utils_panel,
@@ -14,5 +14,6 @@ modules = (
     context_pie_new,
     armature_operators,
     shape_key_bind,
-    intersection_tester
+    intersection_tester,
+    physic
 )

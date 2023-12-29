@@ -1,0 +1,10 @@
+class Modes:
+    OBJECT: str = 'OBJECT'
+    EDIT: str = 'EDIT'
+    POSE: str = 'POSE'
+    SCULPT: str = 'SCULPT'
+    VERTEX_PAINT: str = 'VERTEX_PAINT'
+    WEIGHT_PAINT: str = 'WEIGHT_PAINT'
+    TEXTURE_PAINT: str = 'TEXTURE_PAINT'
+    PARTICLE_EDIT: str = 'PARTICLE_EDIT'
+    EDIT_GPENCIL: str = 'EDIT_GPENCIL'

@@ -2,90 +2,13 @@ from abc import ABC, abstractmethod
 from typing import Callable, Any
 
 import bpy
+from .filters import any_object, only_armature, only_mesh, only_armature_weight
+from .property_view import PropertyView
 from ..armature_operators.selection import ZENU_OT_select_parent_objects, ZENU_OT_select_bones
+from ..physic import ZENU_OT_bind_physic_to_active
+from ..shape_key_bind import ZENU_OT_open_bind_shape_key
 from ...keybindings import view_3d
-from ...utils import is_type, check_mods
-
-
-class Modes:
-    OBJECT: str = 'OBJECT'
-    EDIT: str = 'EDIT'
-    POSE: str = 'POSE'
-    SCULPT: str = 'SCULPT'
-    VERTEX_PAINT: str = 'VERTEX_PAINT'
-    WEIGHT_PAINT: str = 'WEIGHT_PAINT'
-    TEXTURE_PAINT: str = 'TEXTURE_PAINT'
-    PARTICLE_EDIT: str = 'PARTICLE_EDIT'
-    EDIT_GPENCIL: str = 'EDIT_GPENCIL'
-
-
-def only_armature(obj: bpy.types.Object) -> bool:
-    return is_type(obj, bpy.types.Armature)
-
-
-def only_armature_weight(obj: bpy.types.Object) -> bool:
-    if len(bpy.context.selected_objects) <= 1:
-        return False
-
-    return is_type(obj, bpy.types.Armature) and check_mods('o')
-
-
-def only_mesh(obj: bpy.types.Object) -> bool:
-    return is_type(obj, bpy.types.Mesh)
-
-
-def any_object(obj: bpy.types.Object) -> bool:
-    return True
-
-
-class PropertyView:
-    _func: Callable[[bpy.types.Object], bool]
-    _name: str
-    _property: str
-    _obj: bpy.types.Object
-    _valid_object: bpy.types.Object
-    _expand: bool = False
-    _use_row: bool = False
-    layout: bpy.types.UILayout
-
-    def __init__(self,
-                 obj: bpy.types.Object,
-                 property: str,
-                 func: Callable[[bpy.types.Object], bool],
-                 text: str = '',
-                 active_object: bpy.types.Object = None,
-                 expand: bool = False,
-                 use_row: bool = False
-                 ):
-        self._use_row = use_row
-        self._func = func
-        self._property = property
-        self._name = text
-
-        self._obj = obj
-        self._valid_object = obj
-        self._expand = expand
-        if active_object:
-            self._valid_object = active_object
-
-    def set_name(self, name: str):
-        self._name = name
-
-    def draw(self):
-        layout = self.layout
-        if not self._obj or not self._valid_object:
-            return
-
-        if not self._func(self._valid_object):
-            return
-
-        if self._use_row:
-            layout = layout.row()
-
-        if self._name:
-            layout.row(align=True).prop(self._obj, self._property, text=self._name, expand=self._expand)
-        else:
-            layout.row(align=True).prop(self._obj, self._property, expand=self._expand)
+from .enums import Modes
 
 
 class OperatorView:
@@ -138,6 +61,15 @@ class OperatorView:
             setattr(op, key, value)
 
 
+class ZENU_MT_context_test(bpy.types.Menu):
+    bl_label = 'Zenu Context'
+    bl_idname = 'ZENU_MT_context_test'
+
+    def draw(self, context: bpy.types.Context):
+        layout = self.layout
+        layout.template_node_operator_asset_root_items()
+        # layout.operator()
+
 class ZENU_MT_context(bpy.types.Menu):
     bl_label = 'Zenu Context'
     bl_idname = 'ZENU_MT_context'
@@ -155,22 +87,26 @@ class ZENU_MT_context(bpy.types.Menu):
             obj_data = obj.data
 
         properties: list[PropertyView] = [
-            PropertyView(obj, "show_in_front", any_object),
-            PropertyView(obj_data, "show_axes", only_armature, text="Axes"),
-            PropertyView(obj_data, "show_names", only_armature, text="Names"),
-            PropertyView(obj, "show_wire", only_mesh, text="Wireframe"),
+
             PropertyView(context.space_data.overlay, "show_face_orientation", only_mesh, active_object=obj),
-            PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
+            [
+                PropertyView(obj, "show_in_front", any_object),
+                PropertyView(obj_data, "show_axes", only_armature, text="Axes"),
+                PropertyView(obj_data, "show_names", only_armature, text="Names"),
+                PropertyView(obj, "show_wire", only_mesh, text="Wireframe"),
+            ]
         ]
-        # bpy.ops.object.parent_set(type='ARMATURE')
 
         modifiers: list[OperatorView] = [
             OperatorView(obj, 'object.automirror', any_object),
+            OperatorView(obj, 'object.modifier_add', only_mesh, vars={'type': 'MIRROR'}, text='Mirror'),
         ]
 
         actions: list[OperatorView] = [
             OperatorView(obj, 'object.convert', only_mesh, text='Convert To Mesh', vars={'target': 'MESH'}),
             OperatorView(obj, ZENU_OT_select_parent_objects.bl_idname, only_armature),
+            OperatorView(obj, ZENU_OT_open_bind_shape_key.bl_idname, only_armature),
+            OperatorView(obj, ZENU_OT_bind_physic_to_active.bl_idname, only_armature),
             OperatorView(obj, ZENU_OT_select_bones.bl_idname, only_mesh),
             OperatorView(obj, 'object.parent_set', only_armature_weight, vars={'type': 'ARMATURE_AUTO'},
                          text='Auto Weight'),
@@ -178,9 +114,14 @@ class ZENU_MT_context(bpy.types.Menu):
                          text='Without Weight'),
         ]
 
-        actionso = [
+        actions_sub_panel = [
             OperatorView(obj, 'render.opengl', any_object, vars={'animation': True},
                          text='Render Preview Animation'),
+            OperatorView(obj, 'nla.bake', any_object),
+            PropertyView(obj_data, "display_type", only_armature, expand=True),
+            PropertyView(obj, "display_type", only_mesh, expand=True),
+            PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
+
         ]
 
         layout = self.layout
@@ -188,23 +129,32 @@ class ZENU_MT_context(bpy.types.Menu):
         modifiers_layout = self.create_layout(pie)
         actions_layout = self.create_layout(pie)
         properties_layout = self.create_layout(pie)
-        propertiess_layout = self.create_layout(pie)
 
-        for item in modifiers:
-            item.layout = modifiers_layout
-            item.draw()
+        other = pie.column()
+        gap = other.column()
+        gap.separator()
+        gap.scale_y = 7
+        other_menu = other.column(align=True)
+        other_menu.scale_y = 1.5
+        propertiess_layout = other_menu
 
-        for item in actions:
-            item.layout = actions_layout
-            item.draw()
 
-        for item in properties:
-            item.layout = properties_layout
-            item.draw()
+        actions_layout.template_node_operator_asset_root_items()
 
-        for item in actionso:
-            item.layout = propertiess_layout
-            item.draw()
+        def draw_panel(arr, lay):
+            for i in arr:
+                if isinstance(i, list):
+                    l = lay.row(align=True)
+                    draw_panel(i, l)
+                    continue
+
+                i.layout = lay
+                i.draw()
+
+        draw_panel(modifiers, modifiers_layout)
+        draw_panel(actions, actions_layout)
+        draw_panel(properties, properties_layout)
+        draw_panel(actions_sub_panel, propertiess_layout)
 
 
 class ZENU_OT_open_context_pie(bpy.types.Operator):
@@ -217,6 +167,7 @@ class ZENU_OT_open_context_pie(bpy.types.Operator):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
+    ZENU_MT_context_test,
     ZENU_OT_open_context_pie,
     ZENU_MT_context
 ))
