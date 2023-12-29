@@ -138,8 +138,8 @@ class ZENU_MT_context(bpy.types.Menu):
         other_menu.scale_y = 1.5
         propertiess_layout = other_menu
 
-
-        actions_layout.template_node_operator_asset_root_items()
+        if bpy.app.version[0] >= 4:
+            actions_layout.template_node_operator_asset_root_items()
 
         def draw_panel(arr, lay):
             for i in arr:
