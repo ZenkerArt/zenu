@@ -25,7 +25,7 @@ def reload_physic_objects():
     for bone in bones:
         if not bone.physic_bind.is_enable: continue
         target = bones[bone.physic_bind.target]
-
+ 
         physic_objects.add_object(FollowObject(
             obj=bone,
             target=target

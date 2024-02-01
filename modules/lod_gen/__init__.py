@@ -114,8 +114,8 @@ class ZENU_OT_create_lods(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ZENU_PT_lod_manager(BasePanel):
-    bl_label = 'LOD Manager'
+class ZENU_PT_lod_gen(BasePanel):
+    bl_label = 'LODGen'
 
     def draw(self, context: Context):
         layout = self.layout
@@ -129,7 +129,7 @@ class ZENU_PT_lod_manager(BasePanel):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
-    ZENU_PT_lod_manager,
+    ZENU_PT_lod_gen,
     ZENU_OT_create_lod,
     ZENU_OT_create_lods
 ))

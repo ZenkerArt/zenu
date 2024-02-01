@@ -1,5 +1,5 @@
 import bpy
-from ...base_panel import BasePanel
+from ...base_panel import BasePanel, BasePanelOnlyArmature
 from ...utils import get_modifier
 
 objects: list[bpy.types.Object] = []
@@ -36,10 +36,10 @@ class ZENU_UL_shape_key_list(bpy.types.UIList):
         layout.prop(item, 'value', emboss=False, text='')
 
 
-class ZENU_PT_bind_shape_key(BasePanel):
+class ZENU_PT_bind_shape_key(BasePanelOnlyArmature):
     bl_label = 'Bind Shape Key'
     bl_context = ''
-
+    bl_region_type = 'UI'
     def draw_driver(self, driver_vars: VarList):
         layout = self.layout
         for _, var in driver_vars:

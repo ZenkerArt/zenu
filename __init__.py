@@ -18,6 +18,7 @@ class ZenUtilsPreferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+        layout.label(text='test')
         # print(__name__)
 
 

@@ -1,74 +1,13 @@
-from abc import ABC, abstractmethod
-from typing import Callable, Any
-
 import bpy
-from .filters import any_object, only_armature, only_mesh, only_armature_weight
+from .enums import Modes
+from .filters import any_object, only_armature, only_mesh, only_armature_weight, only_edit_mesh
+from .operator_view import OperatorView
 from .property_view import PropertyView
-from ..armature_operators.selection import ZENU_OT_select_parent_objects, ZENU_OT_select_bones
-from ..physic import ZENU_OT_bind_physic_to_active
+from ..menu_manager import menu_manager
+from ..mesh_utils import ZENU_OT_edger, ZENU_OT_extract_mesh
 from ..shape_key_bind import ZENU_OT_open_bind_shape_key
 from ...keybindings import view_3d
-from .enums import Modes
 
-
-class OperatorView:
-    _func: Callable[[bpy.types.Object], bool]
-    _name: str
-    _ops: str
-    _obj: bpy.types.Object
-    _vars: dict[str, Any] = {}
-    layout: bpy.types.UILayout
-
-    def __init__(self,
-                 obj: bpy.types.Object, ops: str,
-                 func: Callable[[bpy.types.Object], bool],
-                 text: str = '',
-                 vars: dict[str, Any] = None,
-                 ):
-
-        self._vars = vars
-
-        if vars is None:
-            self._vars = dict()
-
-        self._func = func
-        self._ops = ops
-        self._obj = obj
-        self._name = text
-
-    def set_name(self, name: str):
-        self._name = name
-
-    def draw(self):
-        layout = self.layout
-        if not self._obj:
-            return
-
-        if not self._func(self._obj):
-            return
-
-        typed, operator = self._ops.split('.')
-
-        if not getattr(getattr(bpy.ops, typed), operator).poll():
-            return
-
-        if self._name:
-            op = layout.operator(self._ops, text=self._name)
-        else:
-            op = layout.operator(self._ops)
-
-        for key, value in self._vars.items():
-            setattr(op, key, value)
-
-
-class ZENU_MT_context_test(bpy.types.Menu):
-    bl_label = 'Zenu Context'
-    bl_idname = 'ZENU_MT_context_test'
-
-    def draw(self, context: bpy.types.Context):
-        layout = self.layout
-        layout.template_node_operator_asset_root_items()
-        # layout.operator()
 
 class ZENU_MT_context(bpy.types.Menu):
     bl_label = 'Zenu Context'
@@ -98,20 +37,14 @@ class ZENU_MT_context(bpy.types.Menu):
         ]
 
         modifiers: list[OperatorView] = [
+            # *menu_manager.right.all,
             OperatorView(obj, 'object.automirror', any_object),
             OperatorView(obj, 'object.modifier_add', only_mesh, vars={'type': 'MIRROR'}, text='Mirror'),
         ]
 
         actions: list[OperatorView] = [
-            OperatorView(obj, 'object.convert', only_mesh, text='Convert To Mesh', vars={'target': 'MESH'}),
-            OperatorView(obj, ZENU_OT_select_parent_objects.bl_idname, only_armature),
+            OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
             OperatorView(obj, ZENU_OT_open_bind_shape_key.bl_idname, only_armature),
-            OperatorView(obj, ZENU_OT_bind_physic_to_active.bl_idname, only_armature),
-            OperatorView(obj, ZENU_OT_select_bones.bl_idname, only_mesh),
-            OperatorView(obj, 'object.parent_set', only_armature_weight, vars={'type': 'ARMATURE_AUTO'},
-                         text='Auto Weight'),
-            OperatorView(obj, 'object.parent_set', only_armature_weight, vars={'type': 'ARMATURE'},
-                         text='Without Weight'),
         ]
 
         actions_sub_panel = [
@@ -138,9 +71,6 @@ class ZENU_MT_context(bpy.types.Menu):
         other_menu.scale_y = 1.5
         propertiess_layout = other_menu
 
-        if bpy.app.version[0] >= 4:
-            actions_layout.template_node_operator_asset_root_items()
-
         def draw_panel(arr, lay):
             for i in arr:
                 if isinstance(i, list):
@@ -150,6 +80,9 @@ class ZENU_MT_context(bpy.types.Menu):
 
                 i.layout = lay
                 i.draw()
+
+        for i in menu_manager.right.all:
+            i.draw(actions_layout, obj)
 
         draw_panel(modifiers, modifiers_layout)
         draw_panel(actions, actions_layout)
@@ -167,7 +100,6 @@ class ZENU_OT_open_context_pie(bpy.types.Operator):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
-    ZENU_MT_context_test,
     ZENU_OT_open_context_pie,
     ZENU_MT_context
 ))

@@ -1,19 +1,23 @@
-from . import align_tools, timemarkers, \
+from . import timemarkers, \
     physic_manager, modifier_search, \
-    lod_manger, utils_panel, \
+    lod_gen, utils_panel, \
     context_pie_new, armature_operators, \
-    shape_key_bind, intersection_tester, physic
+    shape_key_bind, intersection_tester, \
+    physic, mesh_utils, menu_manager, \
+    hair_physic_settings, ik_switcher
 
 modules = (
     utils_panel,
     physic_manager,
-    align_tools,
     modifier_search,
     timemarkers,
-    lod_manger,
+    lod_gen,
     context_pie_new,
     armature_operators,
     shape_key_bind,
     intersection_tester,
-    physic
+    # physic,
+    mesh_utils,
+    hair_physic_settings,
+    ik_switcher
 )

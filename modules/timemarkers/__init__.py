@@ -107,7 +107,7 @@ class ZENU_PT_time_markers(BasePanel):
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_time_create_spaces,
-    ZENU_PT_time_markers,
+    # ZENU_PT_time_markers,
 ))
 
 
@@ -119,11 +119,3 @@ def register():
 
 def unregister():
     unreg()
-
-
-class ZENU_OT_time_create_spaces(bpy.types.Operator):
-    bl_label = 'Time Create Spaces'
-    bl_idname = 'zenu.time_create_spaces'
-
-    def execute(self, context: bpy.types.Context):
-        return {'FINISHED'}

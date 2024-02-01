@@ -17,5 +17,9 @@ def only_mesh(obj: bpy.types.Object) -> bool:
     return is_type(obj, bpy.types.Mesh)
 
 
+def only_edit_mesh(obj: bpy.types.Object) -> bool:
+    return is_type(obj, bpy.types.Mesh) and check_mods('e')
+
+
 def any_object(obj: bpy.types.Object) -> bool:
     return True

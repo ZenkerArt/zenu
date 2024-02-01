@@ -173,7 +173,6 @@ class ZENU_PT_object_property(BasePanel):
         self.draw_toggle(arm, 'show_axes', text='Bones Axis', layout=col)
 
         col.row().prop(arm, "pose_position", expand=True)
-        # col
 
         if context.active_pose_bone:
             col.prop(context.active_pose_bone, "custom_shape", text='')

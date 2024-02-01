@@ -1,4 +1,13 @@
 import bpy
+from .utils import is_type
+
+
+class BasePanelProperty(bpy.types.Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    bl_category = 'Zenu'
+    pass
 
 
 class BasePanel(bpy.types.Panel):
@@ -22,3 +31,9 @@ class BasePanel(bpy.types.Panel):
         layout.prop(data, prop,
                     icon=on_icon if getattr(data, prop, False) else off_icon,
                     text=text)
+
+
+class BasePanelOnlyArmature(BasePanel):
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        return is_type(context.active_object, bpy.types.Armature)
