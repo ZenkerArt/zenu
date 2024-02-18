@@ -15,6 +15,7 @@ class BasePanel(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = 'Zenu'
     bl_context = 'objectmode'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw_toggle(self, data, prop: str, text: str = '',
                     on_icon: str = 'RESTRICT_VIEW_ON',

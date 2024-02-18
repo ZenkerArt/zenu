@@ -4,20 +4,20 @@ from .filters import any_object, only_armature, only_mesh, only_armature_weight,
 from .operator_view import OperatorView
 from .property_view import PropertyView
 from ..menu_manager import menu_manager
-from ..mesh_utils import ZENU_OT_edger, ZENU_OT_extract_mesh
 from ..shape_key_bind import ZENU_OT_open_bind_shape_key
 from ...keybindings import view_3d
+
+
+def create_layout(layout: bpy.types.UILayout) -> bpy.types.UILayout:
+    actions_layout = layout.column(align=True)
+    actions_layout.scale_x = 1.5
+    actions_layout.scale_y = 1.5
+    return actions_layout
 
 
 class ZENU_MT_context(bpy.types.Menu):
     bl_label = 'Zenu Context'
     bl_idname = 'ZENU_MT_context'
-
-    def create_layout(self, layout: bpy.types.UILayout) -> bpy.types.UILayout:
-        actions_layout = layout.column(align=True)
-        actions_layout.scale_x = 1.5
-        actions_layout.scale_y = 1.5
-        return actions_layout
 
     def draw(self, context: bpy.types.Context):
         obj = context.active_object
@@ -26,14 +26,15 @@ class ZENU_MT_context(bpy.types.Menu):
             obj_data = obj.data
 
         properties: list[PropertyView] = [
-
-            PropertyView(context.space_data.overlay, "show_face_orientation", only_mesh, active_object=obj),
+            PropertyView(context.space_data.overlay, 'show_weight', only_mesh, active_object=obj),
+            PropertyView(context.space_data.overlay, 'show_face_orientation', only_mesh, active_object=obj),
             [
-                PropertyView(obj, "show_in_front", any_object),
-                PropertyView(obj_data, "show_axes", only_armature, text="Axes"),
-                PropertyView(obj_data, "show_names", only_armature, text="Names"),
-                PropertyView(obj, "show_wire", only_mesh, text="Wireframe"),
-            ]
+                PropertyView(obj, 'show_in_front', any_object),
+                PropertyView(obj_data, 'show_axes', only_armature, text="Axes"),
+                PropertyView(obj_data, 'show_names', only_armature, text="Names"),
+                PropertyView(obj, 'show_wire', only_mesh, text="Wireframe"),
+            ],
+            PropertyView(context.scene.render, 'use_simplify', any_object)
         ]
 
         modifiers: list[OperatorView] = [
@@ -54,14 +55,13 @@ class ZENU_MT_context(bpy.types.Menu):
             PropertyView(obj_data, "display_type", only_armature, expand=True),
             PropertyView(obj, "display_type", only_mesh, expand=True),
             PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
-
         ]
 
         layout = self.layout
         pie = layout.menu_pie()
-        modifiers_layout = self.create_layout(pie)
-        actions_layout = self.create_layout(pie)
-        properties_layout = self.create_layout(pie)
+        modifiers_layout = create_layout(pie)
+        actions_layout = create_layout(pie)
+        properties_layout = create_layout(pie)
 
         other = pie.column()
         gap = other.column()
@@ -111,4 +111,5 @@ def register():
 
 
 def unregister():
+    view_3d.remove('W')
     unreg()

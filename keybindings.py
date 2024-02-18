@@ -50,13 +50,24 @@ class Keybindings:
         )
         self._keys.append(Keybinding(bind=key_entry))
 
+    def remove(self, type: str):
+        for i in self._keys:
+            if i.bind.type == type:
+                self._keys.remove(i)
+
     def register(self):
-        key_config = bpy.context.window_manager.keyconfigs.addon
-        self._key_map = key_config.keymaps.new(name=self._name, space_type=self._space)
+        try:
+            key_config = bpy.context.window_manager.keyconfigs.addon
+            self._key_map = key_config.keymaps.new(name=self._name, space_type=self._space)
+        except Exception:
+            pass
 
     def unregister(self):
-        for i in self._keys:
-            self._key_map.keymap_items.remove(i.bind)
+        try:
+            for i in self._keys:
+                self._key_map.keymap_items.remove(i.bind)
+        except Exception:
+            pass
 
 
 dopesheet = Keybindings(name='Dopesheet', space_type='DOPESHEET_EDITOR')

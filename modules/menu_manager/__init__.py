@@ -1,5 +1,5 @@
 from .menu_group import MenuGroup, OperatorItem
-from ..context_pie_new import OperatorView
+from ..context_pie import OperatorView
 
 
 class MenuManager:
