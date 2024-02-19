@@ -38,8 +38,6 @@ class ZENU_MT_context(bpy.types.Menu):
         ]
 
         modifiers: list[OperatorView] = [
-            # *menu_manager.right.all,
-            OperatorView(obj, 'object.automirror', any_object),
             OperatorView(obj, 'object.modifier_add', only_mesh, vars={'type': 'MIRROR'}, text='Mirror'),
         ]
 

@@ -38,8 +38,16 @@ def register_modules():
         item = bpy.context.scene.zenu_modules.get(text)
 
         if item:
-            if not item.is_enable:
-                modules_name[name].unregister()
+            if item.is_enable:
+                try:
+                    modules_name[name].register()
+                except Exception:
+                    pass
+            else:
+                try:
+                    modules_name[name].unregister()
+                except Exception:
+                    pass
             continue
 
         item: ZenuModule = bpy.context.scene.zenu_modules.add()
@@ -72,9 +80,8 @@ class ZenUtilsPreferences(bpy.types.AddonPreferences):
 
 
 @persistent
-def on_change_file():
+def on_change_file(self, scene):
     Timer(.2, register_modules, ()).start()
-    print('File load')
 
 
 def register():

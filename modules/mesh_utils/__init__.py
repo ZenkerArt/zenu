@@ -21,4 +21,5 @@ def register():
 
 
 def unregister():
+    menu_manager.clear()
     unreg()
