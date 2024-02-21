@@ -4,6 +4,7 @@ from .filters import any_object, only_armature, only_mesh, only_armature_weight,
 from .operator_view import OperatorView
 from .property_view import PropertyView
 from ..menu_manager import menu_manager
+from ..mesh_utils import ZENU_OT_edger, ZENU_OT_extract_mesh, ZENU_OT_data_transfer
 from ..shape_key_bind import ZENU_OT_open_bind_shape_key
 from ...keybindings import view_3d
 
@@ -44,6 +45,9 @@ class ZENU_MT_context(bpy.types.Menu):
         actions: list[OperatorView] = [
             OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
             OperatorView(obj, ZENU_OT_open_bind_shape_key.bl_idname, only_armature),
+            OperatorView(obj, ZENU_OT_edger.bl_idname),
+            OperatorView(obj, ZENU_OT_extract_mesh.bl_idname),
+            OperatorView(obj, ZENU_OT_data_transfer.bl_idname),
         ]
 
         actions_sub_panel = [

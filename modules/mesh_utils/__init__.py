@@ -12,14 +12,14 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 
 def register():
-    menu_manager.right.add_list([
-        OperatorItem(ZENU_OT_edger.bl_idname),
-        OperatorItem(ZENU_OT_extract_mesh.bl_idname),
-        OperatorItem(ZENU_OT_data_transfer.bl_idname)
-    ])
+    # menu_manager.right.add_list([
+    #     OperatorItem(ZENU_OT_edger.bl_idname),
+    #     OperatorItem(ZENU_OT_extract_mesh.bl_idname),
+    #     OperatorItem(ZENU_OT_data_transfer.bl_idname)
+    # ])
     reg()
 
 
 def unregister():
-    menu_manager.clear()
+    # menu_manager.clear()
     unreg()

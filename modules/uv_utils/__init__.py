@@ -10,6 +10,7 @@ class ZENU_OT_rotate_selected_uv(bpy.types.Operator):
     bl_label = 'Rotate UV'
     bl_idname = 'zenu.rotate_selected_uv'
     angle: bpy.props.FloatProperty(name='Angle', default=1.5708)
+
     def execute(self, context: bpy.types.Context):
         prev = bpy.context.space_data.pivot_point
 
@@ -98,10 +99,6 @@ class ZENU_PT_uv_utils(BasePanel):
         row = col.row(align=True)
         op = row.operator(ZENU_OT_rotate_selected_uv.bl_idname, text='-90°')
         op.angle = -1.5708
-
-
-
-
 
         op = row.operator(ZENU_OT_rotate_selected_uv.bl_idname, text='90°')
         op.angle = 1.5708
