@@ -28,17 +28,15 @@ class ZENU_OT_select_uv_shell(bpy.types.Operator):
     bl_idname = 'zenu.select_uv_shell'
     select_vertical: bpy.props.BoolProperty(name='Select Vertical', default=False)
 
-    def execute(self, context: bpy.types.Context):
-        bpy.ops.uv.select_mode(type='VERTEX')
-        mesh = context.active_object.data
-        mesh: bmesh.types.BMesh = bmesh.from_edit_mesh(mesh)
+    def select_layout(self, context: bpy.types.Context, mesh_origin: bpy.types.Mesh):
+        mesh: bmesh.types.BMesh = bmesh.from_edit_mesh(mesh_origin)
         uv_layer: bmesh.types.BMLayerItem = mesh.loops.layers.uv.active
         islands = bmesh_utils.bmesh_linked_uv_islands(mesh, uv_layer)
         threshold: float = context.scene.zenu_uv_aspect_threshold
+
         # print(uv_layer)
         for island in islands:
             loops = []
-            aspect_horizontal = 0
             min_box = Vector((float('inf'), float('inf')))
             max_box = Vector((float('-inf'), float('-inf')))
 
@@ -71,7 +69,15 @@ class ZENU_OT_select_uv_shell(bpy.types.Operator):
                 for i in loops:
                     i.select = True
 
-        bmesh.update_edit_mesh(context.active_object.data)
+        bmesh.update_edit_mesh(mesh_origin)
+
+    def execute(self, context: bpy.types.Context):
+        bpy.ops.uv.select_mode(type='VERTEX')
+        # mesh = context.active_object.data
+
+        for obj in context.selected_objects:
+            self.select_layout(context, obj.data)
+
         return {'FINISHED'}
 
 
