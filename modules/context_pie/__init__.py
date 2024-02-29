@@ -27,33 +27,28 @@ class ZENU_MT_context(bpy.types.Menu):
             obj_data = obj.data
 
         properties: list[PropertyView] = [
-            PropertyView(context.space_data.overlay, 'show_weight', only_mesh, active_object=obj),
-            PropertyView(context.space_data.overlay, 'show_face_orientation', only_mesh, active_object=obj),
+            [
+                PropertyView(context.space_data.overlay, 'show_retopology', only_edit_mesh, active_object=obj),
+                PropertyView(context.space_data.overlay, 'show_weight', only_edit_mesh, active_object=obj),
+            ],
             [
                 PropertyView(obj, 'show_in_front', any_object),
                 PropertyView(obj_data, 'show_axes', only_armature, text="Axes"),
                 PropertyView(obj_data, 'show_names', only_armature, text="Names"),
                 PropertyView(obj, 'show_wire', only_mesh, text="Wireframe"),
             ],
+            PropertyView(context.space_data.overlay, 'show_face_orientation', only_mesh, active_object=obj),
             PropertyView(context.scene.render, 'use_simplify', any_object)
         ]
 
         modifiers: list[OperatorView] = [
-            OperatorView(obj, 'object.modifier_add', only_mesh, vars={'type': 'MIRROR'}, text='Mirror'),
         ]
 
         actions: list[OperatorView] = [
             OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
-            OperatorView(obj, ZENU_OT_open_bind_shape_key.bl_idname, only_armature),
-            OperatorView(obj, ZENU_OT_edger.bl_idname),
-            OperatorView(obj, ZENU_OT_extract_mesh.bl_idname),
-            OperatorView(obj, ZENU_OT_data_transfer.bl_idname),
         ]
 
         actions_sub_panel = [
-            OperatorView(obj, 'render.opengl', any_object, vars={'animation': True},
-                         text='Render Preview Animation'),
-            OperatorView(obj, 'nla.bake', any_object),
             PropertyView(obj_data, "display_type", only_armature, expand=True),
             PropertyView(obj, "display_type", only_mesh, expand=True),
             PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
@@ -77,6 +72,7 @@ class ZENU_MT_context(bpy.types.Menu):
             for i in arr:
                 if isinstance(i, list):
                     l = lay.row(align=True)
+                    l.scale_x = .8
                     draw_panel(i, l)
                     continue
 
@@ -85,6 +81,12 @@ class ZENU_MT_context(bpy.types.Menu):
 
         for i in menu_manager.right.all:
             i.draw(actions_layout, obj)
+
+        for i in menu_manager.left.all:
+            i.draw(modifiers_layout, obj)
+
+        for i in menu_manager.down.all:
+            i.draw(properties_layout, obj)
 
         draw_panel(modifiers, modifiers_layout)
         draw_panel(actions, actions_layout)
@@ -113,5 +115,5 @@ def register():
 
 
 def unregister():
-    view_3d.remove('W')
+    view_3d.deactivate('W')
     unreg()

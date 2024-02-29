@@ -114,7 +114,7 @@ class ZENU_OT_bind_physic_to_active(bpy.types.Operator):
     def execute(self, context: Context):
         active = context.active_pose_bone
         to_bind = context.selected_pose_bones.copy()
-        to_bind.remove(active)
+        to_bind.deactivate(active)
 
         for i in to_bind:
             i.physic_bind.is_enable = True

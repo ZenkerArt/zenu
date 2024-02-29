@@ -50,10 +50,11 @@ def cloth_settings_to_dict(obj: bpy.types.Object):
 
 
 class ZENU_OT_physic_save(bpy.types.Operator):
-    bl_label = 'Physic Save'
+    bl_label = 'Physic Save To File'
     bl_idname = 'zenu.physic_to_json'
 
     obj: bpy.props.StringProperty(name='Object Name')
+    to_clipboard: bpy.props.BoolProperty(default=False)
 
     @classmethod
     def poll(cls, context: bpy.types.Context):
@@ -64,27 +65,35 @@ class ZENU_OT_physic_save(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         obj = bpy.data.objects.get(self.obj) or context.active_object
-        preset = get_current_preset()
-        dct = cloth_settings_to_dict(obj)
-        preset.save(dct)
+
+        if self.to_clipboard:
+            bpy.context.window_manager.clipboard = json.dumps(cloth_settings_to_dict(obj), indent=2)
+        else:
+            preset = get_current_preset()
+            dct = cloth_settings_to_dict(obj)
+            preset.save(dct)
 
         return {'FINISHED'}
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        return bpy.context.window_manager.invoke_props_dialog(self)
+        if self.to_clipboard:
+            return self.execute(context)
+        else:
+            return bpy.context.window_manager.invoke_props_dialog(self)
+
 
 class ZENU_OT_physic_load(bpy.types.Operator):
-    bl_label = 'Physic Load'
+    bl_label = 'Physic Load From File'
     bl_idname = 'zenu.json_to_physic'
 
     obj: bpy.props.StringProperty(name='Object Name')
+    from_clipboard: bpy.props.BoolProperty(default=False)
 
     @classmethod
     def poll(cls, context: bpy.types.Context):
         return get_cloth(context.active_object) and get_current_preset()
 
     def dict_to_bpy_struct(self, struct: bpy.types.bpy_struct, dct: dict[str, Any]) -> dict[str, Any]:
-
         for key, value in dct.items():
             if isinstance(value, list):
                 value = Vector(tuple(value))
@@ -98,8 +107,14 @@ class ZENU_OT_physic_load(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         obj = bpy.data.objects.get(self.obj) or context.active_object
         cloth = get_cloth(obj)
-        preset = get_current_preset()
-        self.dict_to_bpy_struct(cloth.settings, preset.load())
+
+        if self.from_clipboard:
+            obj = json.loads(bpy.context.window_manager.clipboard)
+            print(obj)
+            self.dict_to_bpy_struct(cloth.settings, obj)
+        else:
+            preset = get_current_preset()
+            self.dict_to_bpy_struct(cloth.settings, preset.load())
         return {'FINISHED'}
 
 
@@ -165,70 +180,8 @@ class ZENU_OT_physic_select_all(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ZENU_OT_physic_bake_object(bpy.types.Operator):
-    bl_label = 'Bake Simulation'
-    bl_idname = 'zenu.physic_bake_object'
-    end: bpy.props.BoolProperty()
-    type: bpy.props.EnumProperty(items={
-        ('bake', 'Bake', ''),
-        ('free', 'Free', ''),
-        ('frame', 'Frame', ''),
-    })
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context):
-        return get_cloth(context.active_object) is not None
-
-    def execute(self, context: bpy.types.Context):
-        cloth = get_cloth(context.active_object)
-        cache = cloth.point_cache
-
-        override = {'blend_data': bpy.data, 'scene': context.scene, 'active_object': context.object,
-                    'point_cache': cache}
-        if self.type == 'bake':
-            bpy.ops.ptcache.bake(override, 'INVOKE_DEFAULT', bake=True)
-        elif self.type == 'free':
-            bpy.ops.ptcache.free_bake(override, 'INVOKE_DEFAULT')
-        elif self.type == 'frame':
-            bpy.ops.ptcache.bake(override, 'INVOKE_DEFAULT', bake=False)
-        return {'FINISHED'}
-
-
-class ZENU_OT_physic_rest_time_scene(bpy.types.Operator):
-    bl_label = 'Rest Time'
-    bl_idname = 'zenu.physic_rest_end_time_scene'
-    end: bpy.props.BoolProperty()
-
-    def execute(self, context: bpy.types.Context):
-        if self.end:
-            context.scene.physic_setting.end = context.scene.frame_end
-        else:
-            context.scene.physic_setting.start = context.scene.frame_start
-        return {'FINISHED'}
-
-
-class ZENU_OT_physic_rest_time_object(bpy.types.Operator):
-    bl_label = 'Rest Time'
-    bl_idname = 'zenu.physic_rest_end_time_object'
-    end: bpy.props.BoolProperty()
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context):
-        return get_cloth(context.active_object) is not None
-
-    def execute(self, context: bpy.types.Context):
-        if self.end:
-            context.active_object.physic_setting.end = 0
-        else:
-            context.active_object.physic_setting.start = 0
-        return {'FINISHED'}
-
-
 classes = (
     ZENU_OT_physic_select_all,
-    ZENU_OT_physic_bake_object,
-    ZENU_OT_physic_rest_time_scene,
-    ZENU_OT_physic_rest_time_object,
     ZENU_OT_physic_save,
     ZENU_OT_physic_load,
     ZENU_OT_physic_create_preset,

@@ -5,7 +5,7 @@ from . import timemarkers, \
     shape_key_bind, intersection_tester, \
     physic, mesh_utils, menu_manager, \
     hair_physic_settings, ik_switcher, shape_utils, bone_layers, \
-    uv_utils, ridged_body
+    uv_utils, animation_utils
 
 modules = (
     utils_panel,
@@ -24,5 +24,5 @@ modules = (
     ik_switcher,
     shape_utils,
     bone_layers,
-    ridged_body
+    animation_utils
 )

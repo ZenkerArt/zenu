@@ -1,10 +1,9 @@
 import bpy
 import bpy.types
-from ...base_panel import BasePanel
-from .operators import ZENU_OT_physic_bake_object, ZENU_OT_physic_rest_time_object, \
-    ZENU_OT_physic_rest_time_scene, ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load, \
+from .operators import ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load, \
     ZENU_OT_physic_create_preset, ZENU_OT_physic_remove_preset
 from .utils import get_cloth
+from ...base_panel import BasePanel
 from ...utils import check_mods, is_mesh
 
 
@@ -34,7 +33,7 @@ class ZENU_UL_physic_groups(bpy.types.UIList):
 class ZENU_PT_physic(BasePanel):
     bl_label = 'Physic'
     bl_context = ''
-    
+
     @classmethod
     def poll(cls, context: 'Context'):
         return check_mods('opesw')
@@ -66,27 +65,9 @@ class ZENU_PT_physic(BasePanel):
         cache = cloth.point_cache
         layout.label(text=context.active_object.name)
 
-        col = layout.column_flow(align=True)
-        col.enabled = True
-        if cache.is_baked is True:
-            col.operator(ZENU_OT_physic_bake_object.bl_idname, text="Delete Bake").type = 'free'
-        else:
-            col.operator(ZENU_OT_physic_bake_object.bl_idname, text="Bake").type = 'bake'
-
-        col.operator(ZENU_OT_physic_bake_object.bl_idname, text="Calculate to Frame").type = 'frame'
-
-        settings = context.active_object.physic_setting
-        sp = layout.column_flow(align=True)
-        grid = sp.grid_flow(columns=2, align=True)
-        grid.prop(settings, 'start')
-        grid.prop(settings, 'end')
-        grid.operator(ZENU_OT_physic_rest_time_object.bl_idname, text='', icon='PANEL_CLOSE').end = False
-        grid.operator(ZENU_OT_physic_rest_time_object.bl_idname, text='', icon='PANEL_CLOSE').end = True
-        sp.prop(settings, 'ignore', icon='PANEL_CLOSE')
         sp = layout.split(align=True)
         sp.prop(cloth, 'show_viewport')
         sp.prop(cloth, 'show_render')
-        layout.label(text=f'{cache.frame_start}:{cache.frame_end}')
 
 
 class ZENU_PT_physic_presets(BasePanel):
@@ -109,12 +90,21 @@ class ZENU_PT_physic_presets(BasePanel):
         row.prop(context.scene, 'physic_presets', text='')
         row.operator(ZENU_OT_physic_create_preset.bl_idname, text='', icon='ADD')
         row.operator(ZENU_OT_physic_remove_preset.bl_idname, text='', icon='REMOVE')
-        col.operator(ZENU_OT_physic_save.bl_idname)
-        col.operator(ZENU_OT_physic_load.bl_idname)
+        op = col.operator(ZENU_OT_physic_save.bl_idname)
+        op.to_clipboard = False
+        op = col.operator(ZENU_OT_physic_load.bl_idname)
+        op.from_clipboard = False
+
+        col = layout.column_flow(align=True)
+        op = col.operator(ZENU_OT_physic_save.bl_idname, text='Save To Clipboard')
+        op.to_clipboard = True
+        op = col.operator(ZENU_OT_physic_load.bl_idname, text='Load From Clipboard')
+        op.from_clipboard = True
 
         col = layout.column_flow(align=True)
         col.prop(cloth_settings, 'time_scale')
         col.prop(cloth_settings, 'mass')
+
 
         col = layout.column_flow(align=True)
         col.prop_search(cloth_settings, "vertex_group_mass", obj, "vertex_groups", icon='PINNED', text='')
@@ -130,30 +120,8 @@ class ZENU_PT_physic_presets(BasePanel):
         # col.prop(cloth_settings, 'vertex_group_mass', text='')
 
 
-
-
-class ZENU_PT_physic_bake_global(BasePanel):
-    bl_label = 'Bake Global'
-    bl_parent_id = 'ZENU_PT_physic'
-
-    def draw(self, context: bpy.types.Context):
-        layout = self.layout
-        col = layout.column_flow(align=True)
-        col.operator("ptcache.bake_all", text="Bake All Dynamics").bake = True
-        col.operator("ptcache.free_bake_all", text="Delete All Bakes")
-        col.operator("ptcache.bake_all", text="Update All to Frame").bake = False
-
-        settings = context.scene.physic_setting
-        sp = layout.grid_flow(align=True, columns=2)
-        sp.prop(settings, 'start')
-        sp.prop(settings, 'end')
-        sp.operator(ZENU_OT_physic_rest_time_scene.bl_idname, text='', icon='PANEL_CLOSE').end = False
-        sp.operator(ZENU_OT_physic_rest_time_scene.bl_idname, text='', icon='PANEL_CLOSE').end = True
-
-
 classes = (
     ZENU_PT_physic,
     ZENU_PT_physic_presets,
-    ZENU_PT_physic_bake_global,
     ZENU_UL_physic_groups
 )

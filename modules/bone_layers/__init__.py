@@ -1,10 +1,8 @@
+import bpy
 from idprop.types import IDPropertyGroup
 from rna_prop_ui import rna_idprop_quote_path
 from ...base_panel import BasePanel
-from ...utils import check_mods, is_type
-
-import bpy
-import collections
+from ...utils import check_mods, is_type, COLOR_ICONS
 
 
 class ShowLevel:
@@ -12,11 +10,8 @@ class ShowLevel:
     DEBUG = 'DEBUG'
 
 
-icons = ('SEQUENCE_COLOR_01', 'SEQUENCE_COLOR_02', 'SEQUENCE_COLOR_03', 'SEQUENCE_COLOR_04', 'SEQUENCE_COLOR_05',
-         'SEQUENCE_COLOR_06', 'SEQUENCE_COLOR_07', 'SEQUENCE_COLOR_08', 'SEQUENCE_COLOR_09')
-
 enum_icons = [
-    (i, ' '.join(i.split('_')).title(), '', i, index) for index, i in enumerate(icons)
+    (i, ' '.join(i.split('_')).title(), '', i, index) for index, i in enumerate(COLOR_ICONS)
 ]
 
 enum_show_levels = (
@@ -64,6 +59,10 @@ class ZENU_OT_toggle_layer_view(bpy.types.Operator):
     bl_options = {'UNDO'}
     name: bpy.props.StringProperty(name='Layer Name')
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        return is_type(context.active_object, bpy.types.Armature)
+
     def execute(self, context: bpy.types.Context):
         arm: bpy.types.Armature = context.active_object.data
         arm.collections[self.name].is_visible = not arm.collections[self.name].is_visible
@@ -89,7 +88,7 @@ class ZENU_PT_bone_layer_setting(BasePanel):
         row = layout.row(align=True)
 
         row.template_list("MATERIAL_UL_ZENU_bone_collection", "", obj.data, "collections", obj.data.collections,
-                             "active_index")
+                          "active_index")
 
         col = row.column(align=True)
         col.operator("armature.collection_add", icon='ADD', text="")
@@ -127,6 +126,7 @@ class BoneLayer:
     @property
     def layout(self):
         return self._layout
+
 
 class BoneLayers:
     _layers: dict[str | int, BoneLayer]
