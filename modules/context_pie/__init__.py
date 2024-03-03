@@ -1,13 +1,23 @@
+from dataclasses import dataclass
+
 import bpy
 from .enums import Modes
 from .filters import any_object, only_armature, only_mesh, only_armature_weight, only_edit_mesh
 from .operator_view import OperatorView
 from .property_view import PropertyView
-from ..menu_manager import menu_manager
-from ..mesh_utils import ZENU_OT_edger, ZENU_OT_extract_mesh, ZENU_OT_data_transfer
-from ..shape_key_bind import ZENU_OT_open_bind_shape_key
-from ...keybindings import view_3d
+from ..menu_manager import menu_3d_view, MenuManager, menu_timeline
+from ...keybindings import view_3d, dopesheet, graph_editor
 
+@dataclass
+class PieMenuContext:
+    mouse_region_x: int
+    mouse_region_y: int
+
+
+pie_menu_context = PieMenuContext(
+    mouse_region_x=0,
+    mouse_region_y=0
+)
 
 def create_layout(layout: bpy.types.UILayout) -> bpy.types.UILayout:
     actions_layout = layout.column(align=True)
@@ -16,11 +26,35 @@ def create_layout(layout: bpy.types.UILayout) -> bpy.types.UILayout:
     return actions_layout
 
 
+@dataclass
+class MenuContext:
+    right_layout: bpy.types.UILayout
+    left_layout: bpy.types.UILayout
+    up_layout: bpy.types.UILayout
+    down_layout: bpy.types.UILayout
+    obj: bpy.types.Object
+
+
 class ZENU_MT_context(bpy.types.Menu):
     bl_label = 'Zenu Context'
     bl_idname = 'ZENU_MT_context'
 
-    def draw(self, context: bpy.types.Context):
+    def draw_menu(self, menu: MenuManager, context: MenuContext):
+        obj = context.obj
+
+        for i in menu.right.all:
+            i.draw(context.right_layout, obj)
+
+        for i in menu.left.all:
+            i.draw(context.left_layout, obj)
+
+        for i in menu.up.all:
+            i.draw(context.up_layout, obj)
+
+        for i in menu.down.all:
+            i.draw(context.down_layout, obj)
+
+    def draw_3d_view(self, context: bpy.types.Context, menu_context: MenuContext):
         obj = context.active_object
         obj_data = None
         if obj:
@@ -54,6 +88,29 @@ class ZENU_MT_context(bpy.types.Menu):
             PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
         ]
 
+        self.draw_menu(menu_3d_view, menu_context)
+        self.draw_panel(modifiers, menu_context.left_layout)
+        self.draw_panel(actions, menu_context.right_layout)
+        self.draw_panel(properties, menu_context.down_layout)
+        self.draw_panel(actions_sub_panel, menu_context.up_layout)
+
+    def draw_panel(self, arr, lay):
+        for i in arr:
+            if isinstance(i, list):
+                l = lay.row(align=True)
+                l.scale_x = .8
+                self.draw_panel(i, l)
+                continue
+
+            i.layout = lay
+            i.draw()
+
+    def draw(self, context: bpy.types.Context):
+        obj = context.active_object
+        obj_data = None
+        if obj:
+            obj_data = obj.data
+
         layout = self.layout
         pie = layout.menu_pie()
         modifiers_layout = create_layout(pie)
@@ -66,32 +123,19 @@ class ZENU_MT_context(bpy.types.Menu):
         gap.scale_y = 7
         other_menu = other.column(align=True)
         other_menu.scale_y = 1.5
-        propertiess_layout = other_menu
 
-        def draw_panel(arr, lay):
-            for i in arr:
-                if isinstance(i, list):
-                    l = lay.row(align=True)
-                    l.scale_x = .8
-                    draw_panel(i, l)
-                    continue
+        menu_context = MenuContext(
+            right_layout=actions_layout,
+            left_layout=modifiers_layout,
+            up_layout=other_menu,
+            down_layout=properties_layout,
+            obj=obj
+        )
 
-                i.layout = lay
-                i.draw()
-
-        for i in menu_manager.right.all:
-            i.draw(actions_layout, obj)
-
-        for i in menu_manager.left.all:
-            i.draw(modifiers_layout, obj)
-
-        for i in menu_manager.down.all:
-            i.draw(properties_layout, obj)
-
-        draw_panel(modifiers, modifiers_layout)
-        draw_panel(actions, actions_layout)
-        draw_panel(properties, properties_layout)
-        draw_panel(actions_sub_panel, propertiess_layout)
+        if context.space_data.type == 'VIEW_3D':
+            self.draw_3d_view(context, menu_context)
+        elif context.space_data.type in {'DOPESHEET_EDITOR', 'GRAPH_EDITOR'}:
+            self.draw_menu(menu_timeline, menu_context)
 
 
 class ZENU_OT_open_context_pie(bpy.types.Operator):
@@ -102,6 +146,11 @@ class ZENU_OT_open_context_pie(bpy.types.Operator):
         bpy.ops.wm.call_menu_pie(name=ZENU_MT_context.bl_idname)
         return {'FINISHED'}
 
+    def invoke(self, context, event):
+        pie_menu_context.mouse_region_x = event.mouse_region_x
+        pie_menu_context.mouse_region_y = event.mouse_region_y
+        return self.execute(context)
+
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_open_context_pie,
@@ -111,9 +160,13 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 def register():
     view_3d.new(ZENU_OT_open_context_pie.bl_idname, type='W')
+    dopesheet.new(ZENU_OT_open_context_pie.bl_idname, type='W')
+    graph_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     reg()
 
 
 def unregister():
     view_3d.deactivate('W')
+    dopesheet.deactivate('W')
+    graph_editor.deactivate('W')
     unreg()

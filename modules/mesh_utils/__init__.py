@@ -7,7 +7,7 @@ from .extract_mesh import ZENU_OT_extract_mesh
 from .material import ZENU_OT_assign_material_active_polygon
 from .smart_array import ZENU_OT_array
 from .smart_bevel import ZENU_OT_bevel
-from ..menu_manager import OperatorItem, menu_manager
+from ..menu_manager import OperatorItem, menu_3d_view
 from ..menu_manager.menu_group import OperatorItemList
 
 reg, unreg = bpy.utils.register_classes_factory((
@@ -44,7 +44,7 @@ def register():
               color=(1.0, 0.812537, 0.10294)),
     ]
 
-    menu_manager.right.add_list([
+    menu_3d_view.right.add_list([
         OperatorItem(ZENU_OT_edger.bl_idname),
         OperatorItem(ZENU_OT_extract_mesh.bl_idname),
         OperatorItem(ZENU_OT_data_transfer.bl_idname),
@@ -58,7 +58,7 @@ def register():
         ]),
     ])
 
-    menu_manager.left.add_list([
+    menu_3d_view.left.add_list([
         OperatorItem(ZENU_OT_array.bl_idname, icon='MOD_ARRAY'),
         OperatorItemList('bavel', [
             OperatorItem(ZENU_OT_bevel.bl_idname,

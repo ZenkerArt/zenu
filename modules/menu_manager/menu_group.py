@@ -15,8 +15,8 @@ class MenuItem(ABC):
 class OperatorItem(MenuItem):
     _op: str
     _vars: dict[str, str] = None
-    _text: str
-    _icon: str
+    text: str
+    icon: str
     _id: str
 
     def __init__(self,
@@ -34,7 +34,7 @@ class OperatorItem(MenuItem):
         self._title = text
 
         self._vars = vars
-        self._icon = icon
+        self.icon = icon
 
         if vars is None:
             self._vars = {}
@@ -42,6 +42,14 @@ class OperatorItem(MenuItem):
     @property
     def id(self):
         return self._id
+
+    @property
+    def vars(self):
+        return self._vars
+
+    @vars.setter
+    def vars(self, value: dict[str, str]):
+        self._vars = value
 
     def __eq__(self, other):
         if hasattr(other, 'id'):
@@ -58,8 +66,8 @@ class OperatorItem(MenuItem):
         if not getattr(getattr(bpy.ops, typed), operator).poll():
             return
 
-        if self._icon:
-            op = layout.operator(self._op, text=self._title, icon=self._icon)
+        if self.icon:
+            op = layout.operator(self._op, text=self._title, icon=self.icon)
         else:
             op = layout.operator(self._op, text=self._title)
 
@@ -145,7 +153,7 @@ class MenuGroup:
     def groups(self):
         return self._groups
 
-    def add(self, operator: OperatorItem | PropertyItem | OperatorItemList):
+    def add(self, operator: str | OperatorItem | PropertyItem | OperatorItemList) -> OperatorItem | None:
         operator_exists = operator in self._operators
         property_exists = operator in self._properties
         if property_exists or operator_exists:
@@ -153,6 +161,10 @@ class MenuGroup:
 
         if isinstance(operator, OperatorItem) or isinstance(operator, OperatorItemList):
             self._operators.append(operator)
+        elif isinstance(operator, str):
+            op = OperatorItem(operator)
+            self._operators.append(op)
+            return op
         elif isinstance(operator, PropertyItem):
             self._properties.append(operator)
 

@@ -1,5 +1,4 @@
 from .menu_group import MenuGroup, OperatorItem
-from ..context_pie import OperatorView
 
 
 class MenuManager:
@@ -18,4 +17,5 @@ class MenuManager:
         self.right = MenuGroup()
 
 
-menu_manager = MenuManager()
+menu_3d_view = MenuManager()
+menu_timeline = MenuManager()

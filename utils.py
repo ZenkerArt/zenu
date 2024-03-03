@@ -8,8 +8,11 @@ COLOR_ICONS = ('SEQUENCE_COLOR_01', 'SEQUENCE_COLOR_02', 'SEQUENCE_COLOR_03', 'S
                'SEQUENCE_COLOR_06', 'SEQUENCE_COLOR_07', 'SEQUENCE_COLOR_08', 'SEQUENCE_COLOR_09')
 
 
-def update_window():
+def update_window(all_w: bool = False):
     for region in bpy.context.area.regions:
+        if all_w:
+            region.tag_redraw()
+            continue
         if region.type == 'WINDOW':
             region.tag_redraw()
 

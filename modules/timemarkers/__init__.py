@@ -2,6 +2,7 @@ import math
 
 import bpy
 from bpy.types import Context
+from ..menu_manager import menu_timeline
 from ...base_panel import BasePanel
 from ...keybindings import dopesheet, graph_editor
 
@@ -112,8 +113,7 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 
 def register():
-    dopesheet.new(ZENU_OT_time_create_spaces.bl_idname, type='W', value='PRESS')
-    graph_editor.new(ZENU_OT_time_create_spaces.bl_idname, type='W', value='PRESS')
+    menu_timeline.left.add(ZENU_OT_time_create_spaces.bl_idname)
     reg()
 
 

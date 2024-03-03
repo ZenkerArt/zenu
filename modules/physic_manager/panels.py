@@ -105,7 +105,6 @@ class ZENU_PT_physic_presets(BasePanel):
         col.prop(cloth_settings, 'time_scale')
         col.prop(cloth_settings, 'mass')
 
-
         col = layout.column_flow(align=True)
         col.prop_search(cloth_settings, "vertex_group_mass", obj, "vertex_groups", icon='PINNED', text='')
         col.prop(cloth_settings, "pin_stiffness", text="Stiffness")

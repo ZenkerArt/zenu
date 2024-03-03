@@ -91,6 +91,8 @@ class ZENU_OT_physic_load(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context: bpy.types.Context):
+        if cls.from_clipboard:
+            return True
         return get_cloth(context.active_object) and get_current_preset()
 
     def dict_to_bpy_struct(self, struct: bpy.types.bpy_struct, dct: dict[str, Any]) -> dict[str, Any]:
@@ -110,7 +112,6 @@ class ZENU_OT_physic_load(bpy.types.Operator):
 
         if self.from_clipboard:
             obj = json.loads(bpy.context.window_manager.clipboard)
-            print(obj)
             self.dict_to_bpy_struct(cloth.settings, obj)
         else:
             preset = get_current_preset()
