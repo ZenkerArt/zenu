@@ -27,7 +27,7 @@ def update(self, context):
             i.is_visible = self.is_visible
 
 
-class MATERIAL_UL_ZENU_bone_collection(bpy.types.UIList):
+class ZENU_UL_bone_collection(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         slot = item
         name = slot.zenu_layer.name
@@ -87,7 +87,7 @@ class ZENU_PT_bone_layer_setting(BasePanel):
 
         row = layout.row(align=True)
 
-        row.template_list("MATERIAL_UL_ZENU_bone_collection", "", obj.data, "collections", obj.data.collections,
+        row.template_list("ZENU_UL_bone_collection", "", obj.data, "collections", obj.data.collections,
                           "active_index")
 
         col = row.column(align=True)
@@ -208,7 +208,7 @@ reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_bone_layer_setting,
     ZENU_PT_bone_layer,
     BoneLayerData,
-    MATERIAL_UL_ZENU_bone_collection,
+    ZENU_UL_bone_collection,
     ZENU_OT_toggle_layer_view
 ))
 

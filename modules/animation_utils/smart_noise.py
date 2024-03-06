@@ -39,6 +39,10 @@ class ZENU_PT_mod_panel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
 
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        return poll(context)
+
     def draw(self, context: bpy.types.Context):
         layout = self.layout
         fcurve = context.active_editable_fcurve
