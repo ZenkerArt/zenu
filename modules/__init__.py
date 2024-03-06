@@ -9,7 +9,7 @@ from . import timemarkers, \
 
 modules = (
     utils_panel,
-    physic_manager,
+    # physic_manager,
     modifier_search,
     timemarkers,
     lod_gen,
