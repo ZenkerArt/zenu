@@ -46,18 +46,24 @@ class BaseExport(bpy.types.Operator, ExportHelper):
         return {'RUNNING_MODAL'}
 
     def export(self, objs: list[bpy.types.Object], name: str):
-        with bpy.context.temp_override(selected_objects=objs):
-            path = os.path.join(os.path.dirname(self.filepath), self.export_name.replace('$', name))
+        prev = bpy.context.selected_objects
+        bpy.ops.object.select_all(action='DESELECT')
+        for i in objs:
+            i.select_set(True)
 
-            if self.export_type == 'FBX':
-                bpy.ops.export_scene.fbx(filepath=path + '.fbx', use_selection=True)
-            elif self.export_type == 'OBJ':
-                bpy.ops.wm.obj_export(filepath=path + '.obj',
-                                      export_selected_objects=True,
-                                      export_materials=self.export_material,
-                                      export_colors=self.export_color
-                                      )
+        path = os.path.join(os.path.dirname(self.filepath), self.export_name.replace('$', name))
 
+        if self.export_type == 'FBX':
+            bpy.ops.export_scene.fbx(filepath=path + '.fbx', use_selection=True)
+        elif self.export_type == 'OBJ':
+            bpy.ops.wm.obj_export(filepath=path + '.obj',
+                                  export_selected_objects=True,
+                                  export_materials=self.export_material,
+                                  export_colors=self.export_color
+                                  )
+        bpy.ops.object.select_all(action='DESELECT')
+        for i in prev:
+            i.select_set(True)
 
 class ZENU_OT_export_by_name(BaseExport):
     bl_label = 'Export By Name'
