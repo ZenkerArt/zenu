@@ -1,7 +1,6 @@
 import bpy
 import bpy.types
-from .operators import ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load, \
-    ZENU_OT_physic_create_preset, ZENU_OT_physic_remove_preset
+from .operators import ZENU_OT_physic_select_all, ZENU_OT_physic_save, ZENU_OT_physic_load
 from .utils import get_cloth
 from ...base_panel import BasePanel
 from ...utils import check_mods, is_mesh
@@ -88,8 +87,6 @@ class ZENU_PT_physic_presets(BasePanel):
         col = layout.column_flow(align=True)
         row = col.row(align=True)
         row.prop(context.scene, 'physic_presets', text='')
-        row.operator(ZENU_OT_physic_create_preset.bl_idname, text='', icon='ADD')
-        row.operator(ZENU_OT_physic_remove_preset.bl_idname, text='', icon='REMOVE')
         op = col.operator(ZENU_OT_physic_save.bl_idname)
         op.to_clipboard = False
         op = col.operator(ZENU_OT_physic_load.bl_idname)
