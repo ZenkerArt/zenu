@@ -18,7 +18,6 @@ reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_assign_material_active_polygon,
     ZENU_OT_array,
     ZENU_OT_bevel,
-    *export.classes
 ))
 
 
@@ -27,7 +26,6 @@ class Color:
     icon: str = None
     name: str = ''
     color: tuple = (0, 0, 0)
-
 
 def register():
     # menu_manager.clear()
@@ -73,12 +71,13 @@ def register():
                          vars={'edit': True}),
         ])
     ])
-    reg()
 
-    bpy.types.Scene.zenu_export_points = bpy.props.CollectionProperty(type=export.export_points.ExportPoint)
-    bpy.types.Scene.zenu_export_points_index = bpy.props.IntProperty()
+    reg()
+    export.register()
+
+    # bpy.types.Object.zenu_export_point = bpy.props.CollectionProperty(name="My Pointer", type=Test)
 
 
 def unregister():
-    # menu_manager.clear()
     unreg()
+    export.unregister()

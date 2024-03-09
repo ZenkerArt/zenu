@@ -1,7 +1,18 @@
-from . import export_points, export_ui, export_utils
+from . import export_points, export_ui, export_utils, export_settings
 
-classes = (
-    *export_points.classes,
-    *export_ui.classes,
-    *export_utils.classes
+modules = (
+    export_points,
+    export_settings,
+    export_ui,
+    export_utils
 )
+
+
+def register():
+    for m in modules:
+        m.register()
+
+
+def unregister():
+    for m in modules:
+        m.unregister()

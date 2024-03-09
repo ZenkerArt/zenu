@@ -36,7 +36,6 @@ class BaseExport(bpy.types.Operator, ExportHelper):
             layout.prop(self, 'export_material')
             layout.prop(self, 'export_color')
 
-
     def invoke(self, context, _event):
         import os
         if not self.filepath:
@@ -64,6 +63,7 @@ class BaseExport(bpy.types.Operator, ExportHelper):
         bpy.ops.object.select_all(action='DESELECT')
         for i in prev:
             i.select_set(True)
+
 
 class ZENU_OT_export_by_name(BaseExport):
     bl_label = 'Export By Name'
@@ -95,7 +95,15 @@ class ZENU_OT_export_by_collection(BaseExport):
         return {'FINISHED'}
 
 
-classes = (
+reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_export_by_name,
     ZENU_OT_export_by_collection
-)
+))
+
+
+def register():
+    reg()
+
+
+def unregister():
+    unreg()

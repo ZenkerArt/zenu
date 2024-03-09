@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Iterable
+from typing import Optional, Any, Iterable, Callable
 
 import bpy.types
 
@@ -15,13 +15,13 @@ class MenuItem(ABC):
 class OperatorItem(MenuItem):
     _op: str
     _vars: dict[str, str] = None
-    text: str
+    text: str | Callable
     icon: str
     _id: str
 
     def __init__(self,
                  op: str | bpy.types.Operator,
-                 text: str = None,
+                 text: str | Callable = None,
                  icon: str = None,
                  vars: dict[str, str] = None,
                  op_id: str = ''):
@@ -66,10 +66,12 @@ class OperatorItem(MenuItem):
         if not getattr(getattr(bpy.ops, typed), operator).poll():
             return
 
+        text = self._title() if callable(self._title) else self._title
+
         if self.icon:
-            op = layout.operator(self._op, text=self._title, icon=self.icon)
+            op = layout.operator(self._op, text=text, icon=self.icon)
         else:
-            op = layout.operator(self._op, text=self._title)
+            op = layout.operator(self._op, text=text)
 
         if self._vars is not None:
             for key, value in self._vars.items():
