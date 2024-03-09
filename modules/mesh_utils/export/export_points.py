@@ -104,9 +104,10 @@ class ZENU_OT_export_point(bpy.types.Operator):
         for coll in collection.children:
             if coll.name == name:
                 return coll
-
             else:
-                return cls.find_collection(name, coll)
+                val = cls.find_collection(name, coll)
+                if val:
+                    return val
 
         return None
 
@@ -114,6 +115,9 @@ class ZENU_OT_export_point(bpy.types.Operator):
     def poll(cls, context: bpy.types.Context):
         context = bpy.context
         obj = context.active_object
+
+        if obj is None:
+            return True
 
         point: ExportPoint = None
         for i in context.scene.zenu_export_points:
