@@ -20,8 +20,9 @@ class ZENU_UL_export_points_settings(bpy.types.UIList):
 class ZENU_PT_assign_panel(bpy.types.Panel):
     bl_idname = 'ZENU_PT_assign_panel'
     bl_label = 'Assign Panel'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_context = "object"
 
     # @classmethod
     # def poll(cls, context: bpy.types.Context):
