@@ -18,7 +18,7 @@ class ConstraintIssueType:
     def get_enum(cls):
         return (
             (str(cls.ALL), 'All', '', 'MESH_PLANE', 0),
-            (str(cls.DEFAULT), 'Default', '', 'SEQUENCE_COLOR_04', 1),
+            (str(cls.DEFAULT), 'Default', '', 'CONSTRAINT_BONE', 1),
             (str(cls.WARN), 'Warn', '', 'SEQUENCE_COLOR_03', 2),
             (str(cls.ERROR), 'Error', '', 'SEQUENCE_COLOR_01', 3)
         )
