@@ -5,10 +5,11 @@ from . import timemarkers, \
     shape_key_bind, intersection_tester, \
     physic, mesh_utils, menu_manager, \
     hair_physic_settings, ik_switcher, shape_utils, bone_layers, \
-    uv_utils, animation_utils
+    uv_utils, animation_utils, gamepad, analyze
 
 modules = (
     utils_panel,
+    # gamepad,
     # physic_manager,
     modifier_search,
     timemarkers,
@@ -24,5 +25,6 @@ modules = (
     # ik_switcher,
     shape_utils,
     bone_layers,
-    animation_utils
+    animation_utils,
+    analyze
 )

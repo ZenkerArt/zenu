@@ -159,14 +159,14 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 
 def register():
+    reg()
     view_3d.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     dopesheet.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     graph_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
-    reg()
 
 
 def unregister():
+    unreg()
     view_3d.deactivate('W')
     dopesheet.deactivate('W')
     graph_editor.deactivate('W')
-    unreg()
