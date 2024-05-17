@@ -30,7 +30,7 @@ class ZENU_OT_move_uv_by_pixel(bpy.types.Operator):
     add: bpy.props.BoolProperty(default=True)
     step: bpy.props.StringProperty()
 
-    def select_layout(self, context: bpy.types.Context, mesh_origin: bpy.types.Mesh):
+    def select_layout(self, context: bpy.types.Context):
         resolution = Vector((context.scene.zenu_uv_resolution_x, context.scene.zenu_uv_resolution_y))
         offset = Vector((context.scene.zenu_uv_offset_x / resolution.x, context.scene.zenu_uv_offset_x / resolution.y))
 
@@ -53,7 +53,7 @@ class ZENU_OT_move_uv_by_pixel(bpy.types.Operator):
                                     orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)))
 
     def execute(self, context: bpy.types.Context):
-        self.select_layout(context, context.active_object)
+        self.select_layout(context)
 
 
         return {'FINISHED'}
