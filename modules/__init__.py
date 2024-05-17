@@ -4,7 +4,7 @@ from . import timemarkers, \
     context_pie, shape_key_bind, physic, \
     mesh_utils, menu_manager, \
     hair_physic_settings, ik_switcher, shape_utils, bone_layers, \
-    uv_utils, animation_utils, search, rig, constraint_utils, asset_browser_utils, test_node_tree, tests
+    uv_utils, animation_utils, search, rig, constraint_utils, asset_browser_utils
 
 modules = (
     uv_utils,
