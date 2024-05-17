@@ -5,6 +5,7 @@ from ..menu_manager import menu_timeline
 from . import animation_offset, smart_noise
 from ..menu_manager.menu_group import OperatorItemList, OperatorItem
 from . import test
+from . import timeline
 
 reg, unreg = bpy.utils.register_classes_factory((
     *animation_offset.classes,
@@ -15,6 +16,7 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 def register():
     reg()
+    timeline.register()
     menu_timeline.right.add(test.ZENU_OT_anim_enable.bl_idname)
     menu_timeline.right.add(smart_noise.ZENU_OT_anim_noise.bl_idname)
     menu_timeline.right.add(OperatorItemList('SmartNoise', [
@@ -31,3 +33,4 @@ def register():
 def unregister():
     unreg()
     test.draw.deactivate()
+    timeline.unregister()

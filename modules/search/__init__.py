@@ -3,8 +3,8 @@ from ...base_panel import BasePanel
 from .constraint_issues import constraint_analyze
 
 
-class ZENU_PT_analyze(BasePanel):
-    bl_label = 'Analyze'
+class ZENU_PT_search(BasePanel):
+    bl_label = 'Search'
     bl_context = ''
 
     def draw(self, context: bpy.types.Context):
@@ -12,7 +12,7 @@ class ZENU_PT_analyze(BasePanel):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
-    ZENU_PT_analyze,
+    ZENU_PT_search,
 ))
 
 

@@ -59,6 +59,7 @@ class ZENU_MT_context(bpy.types.Menu):
         obj_data = None
         if obj:
             obj_data = obj.data
+        # bpy.context.object.pose.use_mirror_x = True
 
         properties: list[PropertyView] = [
             [
@@ -71,6 +72,7 @@ class ZENU_MT_context(bpy.types.Menu):
                 PropertyView(obj_data, 'show_names', only_armature, text="Names"),
                 PropertyView(obj, 'show_wire', only_mesh, text="Wireframe"),
             ],
+            PropertyView(bpy.context.object.pose, 'use_mirror_x', any_object, text="X Mirror"),
             PropertyView(context.space_data.overlay, 'show_face_orientation', only_mesh, active_object=obj),
             PropertyView(context.scene.render, 'use_simplify', any_object)
         ]
@@ -107,10 +109,6 @@ class ZENU_MT_context(bpy.types.Menu):
 
     def draw(self, context: bpy.types.Context):
         obj = context.active_object
-        obj_data = None
-        if obj:
-            obj_data = obj.data
-
         layout = self.layout
         pie = layout.menu_pie()
         modifiers_layout = create_layout(pie)

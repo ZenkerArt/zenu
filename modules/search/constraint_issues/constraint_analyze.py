@@ -126,7 +126,7 @@ class ZENU_OT_analyze_constraints(bpy.types.Operator):
             constraint_data_a = collection.add()
             constraint_data_a.name = bone.name
             constraint_data_a.title = bone.name
-            constraint_data_a.bone = bone.name
+            constraint_data_a.pose_bone = bone.name
             constraint_data_a.elem_type = ConstraintIssueElementType.HEADING
             constraint_data_a.issue = '[]'
 
@@ -144,7 +144,7 @@ class ZENU_OT_analyze_constraints(bpy.types.Operator):
                 constraint_data.title = constraint.name
                 constraint_data.issue = json.dumps([asdict(i) for i in issues])
                 constraint_data.type = error
-                constraint_data.bone = bone.name
+                constraint_data.pose_bone = bone.name
 
                 constraint_data_a.name += f' {constraint.name}'
                 constraint_data_a.constraint_type += f' {constraint.type}'
