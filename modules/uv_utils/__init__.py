@@ -53,8 +53,8 @@ class ZENU_OT_move_uv_by_pixel(bpy.types.Operator):
                                     orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)))
 
     def execute(self, context: bpy.types.Context):
-        for obj in context.selected_objects:
-            self.select_layout(context, obj.data)
+        self.select_layout(context, obj.data)
+
 
         return {'FINISHED'}
 
