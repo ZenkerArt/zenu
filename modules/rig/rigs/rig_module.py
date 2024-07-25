@@ -1,9 +1,13 @@
 import uuid
 from abc import ABC
+from dataclasses import dataclass, field
 from typing import Callable
 from hashlib import sha1
 import bpy.types
 from typing import TYPE_CHECKING
+
+from mathutils import Vector
+from ..shapes import get_shape
 
 if TYPE_CHECKING:
     from ..meta_bone import MetaBoneData
@@ -17,18 +21,66 @@ def fullname(o) -> str:
     return module + '.' + klass.__qualname__
 
 
+@dataclass
+class RigStyleItem:
+    bone_name: str
+    shape: str
+    color: str
+
+    scale: Vector = field(default_factory=lambda: Vector((1, 1, 1)))
+    translate: Vector = field(default_factory=lambda: Vector((0, 0, 0)))
+    rotation: Vector = field(default_factory=lambda: Vector((0, 0, 0)))
+
+
+class RigStyleContainer:
+    _styles: list[RigStyleItem]
+
+    def __init__(self):
+        self._styles = []
+
+    def add(self, bone_name: str, shape: str, color: str = 'THEME03'):
+        item = RigStyleItem(
+            bone_name=bone_name,
+            shape=shape,
+            color=color
+        )
+
+        self._styles.append(item)
+
+        return item
+
+    def apply_styles(self, obj: bpy.types.Object):
+        for i in self._styles:
+            try:
+                bone = obj.pose.bones[i.bone_name]
+                bone.color.palette = i.color
+                bone.custom_shape = get_shape(i.shape)
+
+                bone.custom_shape_scale_xyz = i.scale
+                bone.custom_shape_rotation_euler = i.rotation
+                bone.custom_shape_translation = i.translate
+            except Exception as e:
+                print(e)
+
+
 class RigModule(ABC):
+    _reg: Callable = None
+    _unreg: Callable = None
     rig_name: str = 'No Name'
     id: str = ''
     n_id: int = 0
     layout: bpy.types.UILayout
-    _reg: Callable = None
-    _unreg: Callable = None
+    styles: RigStyleContainer
     bone: 'MetaBoneData'
 
     def __init__(self):
         self.id = sha1(fullname(self).encode()).hexdigest()
         self.n_id = int(self.id, 16) % (10 ** 4)
+        self.styles = RigStyleContainer()
+        self.init()
+
+    def init(self):
+        pass
 
     def __getattr__(self, item):
         try:
@@ -80,5 +132,8 @@ class RigModule(ABC):
     def regenerate(self, context: bpy.types.Context, original_arm: bpy.types.Object, new_arm: bpy.types.Object):
         pass
 
-    def execute(self, context: bpy.types.Context):
+    def execute_pose(self, context: bpy.types.Context):
+        pass
+
+    def execute_edit(self, context: bpy.types.Context):
         pass

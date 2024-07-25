@@ -10,27 +10,6 @@ from ..rig_module import RigModule
 from ...meta_bone import MetaBoneData
 
 
-def tentacle_func(pos: float, time: float, radius: float, strength: float, thickness: float):
-    try:
-        accuracy = 10000
-        count = radius * accuracy
-        pos_t = pos + time
-
-        dist = (((pos_t * accuracy) % count) / count)
-
-        dist = thickness + (sin(dist * math.pi) / 2) * strength
-    except Exception:
-        return 0
-    # print(dist)
-
-    return 1
-
-
-@persistent
-def load_handler(dummy):
-    bpy.app.driver_namespace['tentacle_func'] = tentacle_func
-
-
 class SplineIKRig(RigModule):
     rig_name = 'Spline IK'
 
@@ -39,11 +18,6 @@ class SplineIKRig(RigModule):
 
     spline_point_count: bpy.props.IntProperty(name='Point Count', min=2, default=3, soft_max=10, subtype='FACTOR')
     root_bone: bpy.props.StringProperty(name='Root Bone')
-
-    def register(self) -> tuple:
-        load_handler(None)
-        bpy.app.handlers.load_post.append(load_handler)
-        return tuple()
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
@@ -94,61 +68,8 @@ class SplineIKRig(RigModule):
         spline_constraint.y_scale_mode = 'NONE'
         spline_constraint.xz_scale_mode = 'BONE_ORIGINAL'
 
-    def create_property(self, name: str, value: float = 0.0, min: float = 0, max: float = 1):
-        arm = self.bone.obj
-
-        name = f'zenu_{name}'
-        arm[name] = value
-        test = arm.id_properties_ui(name)
-        test.update(min=min, max=max, default=value, subtype='FACTOR')
-        return name
-
-    def _driver_setup(self, bones: list[MetaBoneData]):
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        self.bone.edit_bone.inherit_scale = 'NONE'
-        for i in bones:
-            i.edit_bone.inherit_scale = 'NONE'
-
-        time_name = self.create_property('time')
-        radius_name = self.create_property('radius')
-        strength_name = self.create_property('strength', max=10)
-        thickness_name = self.create_property('thickness', max=10)
-
-        bpy.ops.object.mode_set(mode='POSE')
-        bones_count = len(bones)
-        arm = self.bone.obj
-
-        def create_driver(bone: MetaBoneData, index: int) -> bpy.types.Driver:
-            driver1 = bone.pose_bone.driver_add('scale', index).driver
-
-            def prop(var_name: str, prop_name: str):
-                var = driver1.variables.new()
-                var.type = 'SINGLE_PROP'
-                var.name = var_name
-                tar = var.targets[0]
-                tar.id = arm
-                tar.data_path = f'["{prop_name}"]'
-
-            prop('time', time_name)
-            prop('radius', radius_name)
-            prop('strength', strength_name)
-            prop('thickness', thickness_name)
-
-            return driver1
-
-        for i, bone in enumerate(bones):
-            driver1 = create_driver(bone, 0)
-            driver2 = create_driver(bone, 2)
-
-            exp = f'tentacle_func({i / bones_count}, time, radius, strength, thickness)'
-
-            driver1.expression = exp
-            driver2.expression = exp
-
-    def execute(self, context: bpy.types.Context):
+    def execute_pose(self, context: bpy.types.Context):
         bones = list(self.get_bones(self.bone))
-        # self._driver_setup(bones)
 
         st = CurveGenerator(self.bone, bones)
         spline = st.generate_spline(self.spline_point_count)

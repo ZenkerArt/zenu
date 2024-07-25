@@ -159,11 +159,11 @@ def register():
     bpy.types.Object.is_rigid_obj = bpy.props.BoolProperty(name='Is Rigid Object')
     bpy.types.Scene.ground_target = bpy.props.PointerProperty(type=bpy.types.Object)
     reg()
-    # bpy.app.handlers.frame_change_pre.append(update)
-    # test.register()
+    bpy.app.handlers.frame_change_pre.append(update)
+    test.register()
 
 
 def unregister():
     unreg()
-    # bpy.app.handlers.frame_change_pre.remove(update)
-    # test.unregister()
+    bpy.app.handlers.frame_change_pre.remove(update)
+    test.unregister()

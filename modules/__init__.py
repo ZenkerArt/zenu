@@ -4,7 +4,7 @@ from . import timemarkers, \
     context_pie, shape_key_bind, physic, \
     mesh_utils, menu_manager, \
     hair_physic_settings, ik_switcher, shape_utils, bone_layers, \
-    uv_utils, animation_utils, search, rig, constraint_utils, asset_browser_utils
+    uv_utils, animation_utils, search, rig, constraint_utils, asset_browser_utils, deko_3d_model_teeth, stop_motion
 
 modules = (
     uv_utils,
@@ -14,6 +14,7 @@ modules = (
     constraint_utils,
     utils_panel,
     # physic_manager,
+    # curve,
     modifier_search,
     timemarkers,
     lod_gen,
@@ -23,8 +24,10 @@ modules = (
     # ik_switcher,
     bone_layers,
     search,
-    # rig,
+    rig,
     asset_browser_utils,
-    # test_node_tree,
-    # tests
+    deko_3d_model_teeth,
+    stop_motion
+    # bsync,
+    # test_node_tree, tests
 )

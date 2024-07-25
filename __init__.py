@@ -1,3 +1,4 @@
+from .utils import register_modules, unregister_modules
 from .modules import modules
 from .keybindings import key_spaces
 import bpy
@@ -24,20 +25,11 @@ def register():
     for i in key_spaces:
         i.register()
 
-    for i in modules:
-        try:
-            i.register()
-        except Exception:
-            pass
-    # bpy.utils.register_class(ZenUtilsPreferences)
+    register_modules(modules)
 
 
 def unregister():
     for i in key_spaces:
         i.unregister()
 
-    for i in modules:
-        try:
-            i.unregister()
-        except Exception:
-            pass
+    unregister_modules(modules)

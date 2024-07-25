@@ -12,6 +12,6 @@ class TestRig(RigModule):
     def draw(self, props: bpy.types.bpy_struct, context: bpy.types.Context):
         self.layout.prop(props, self.get_prop_name('test_val'))
 
-    def execute(self, context: bpy.types.Context):
+    def execute_pose(self, context: bpy.types.Context):
         print(self.test3_val)
         print(self.bone)

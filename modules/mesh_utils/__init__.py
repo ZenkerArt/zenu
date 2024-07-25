@@ -9,7 +9,6 @@ from .smart_array import ZENU_OT_array
 from .smart_bevel import ZENU_OT_bevel
 from ..menu_manager import OperatorItem, menu_3d_view
 from ..menu_manager.menu_group import OperatorItemList
-from . import export
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_edger,
@@ -73,11 +72,9 @@ def register():
     ])
 
     reg()
-    export.register()
 
     # bpy.types.Object.zenu_export_point = bpy.props.CollectionProperty(name="My Pointer", type=Test)
 
 
 def unregister():
     unreg()
-    export.unregister()

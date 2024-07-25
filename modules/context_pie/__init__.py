@@ -165,6 +165,3 @@ def register():
 
 def unregister():
     unreg()
-    view_3d.deactivate('W')
-    dopesheet.deactivate('W')
-    graph_editor.deactivate('W')

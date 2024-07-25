@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import bpy
+from .bone_utils import bone_clone
 
 if TYPE_CHECKING:
     from . import MetaBone
@@ -46,6 +47,10 @@ class MetaBoneData:
             return self.pose_bone == other
 
         return super().__eq__(other)
+
+    def clone(self, name: str = None, prefix: str = None, postfix: str = None):
+        """Work only in edit mode, not copy constraints, creates new bone with same transformations"""
+        return bone_clone(self.edit_bone, name=name, prefix=prefix, postfix=postfix)
 
     @property
     def obj(self):

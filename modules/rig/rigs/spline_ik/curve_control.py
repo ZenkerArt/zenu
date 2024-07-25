@@ -1,5 +1,6 @@
 import bpy
 from .point_control import PointControl
+from ...shapes import get_shape, ShapesEnum
 
 
 class CurveControl:
@@ -70,6 +71,6 @@ class CurveControl:
 
             hook.vertex_indices_set(indices)
 
-        shape = bpy.data.objects["Cube.001"]
+        shape = get_shape(ShapesEnum.SphereDirWire)
         for i in self._spline_controls:
             i.apply_theme(shape)

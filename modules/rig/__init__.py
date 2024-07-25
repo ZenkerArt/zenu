@@ -1,6 +1,8 @@
+import os
+
 import bpy
 from rna_prop_ui import rna_idprop_quote_path
-from ...utils import is_type
+from ...utils import is_type, get_path_to_asset, get_collection
 from .meta_bone import MetaBoneData
 from ...base_panel import BasePanel
 from .rigs import rig_modules
@@ -79,14 +81,26 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
     def apply_to_bones(self, context: bpy.types.Context, bones):
         for bone in bones:
             meta = MetaBoneData.from_pose_bone(bone)
+
             for module in rig_modules:
                 if meta.meta.type != module.id: continue
 
                 module.bone = meta
-                module.execute(context)
+
+                bpy.ops.object.mode_set(mode='EDIT')
+                module.execute_edit(context)
+                name = meta.name
+                arm = meta.obj
+
+                bpy.ops.object.mode_set(mode='POSE')
+                module.bone = MetaBoneData.from_pose_bone(arm.pose.bones[name])
+                module.execute_pose(context)
+
+                module.styles.apply_styles(meta.obj)
                 break
 
     def prepare_new_armature(self, context: bpy.types.Context):
+        bpy.ops.object.mode_set(mode='POSE')
         original_obj = context.active_object
         new_obj: bpy.types.Object = context.active_object.data.zenu_meta_settings.target
 
@@ -97,8 +111,6 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
                 pass
 
         new_obj.data.zenu_meta_deps.clear()
-
-        new_obj.data = original_obj.data.copy()
 
         name = original_obj.data.name
         new_data = original_obj.data.copy()
@@ -113,8 +125,14 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
 
         new_obj.data = new_data
         bpy.data.armatures.remove(old_data, do_unlink=True)
+
         new_obj.data.name = f'{name}_Generated'
         new_obj.name = original_obj.name + '_Edit'
+
+        drivers_data = new_obj.animation_data.drivers
+
+        for dr in drivers_data:
+            new_obj.driver_remove(dr.data_path, -1)
 
         select_armature(context, new_obj)
         return new_obj
@@ -125,10 +143,33 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
         if context.active_object.data.zenu_meta_settings.mode == MetaBoneMode.NEW:
             obj = self.prepare_new_armature(context)
 
+            for bone in obj.pose.bones:
+                for c in bone.constraints:
+                    bone.constraints.remove(c)
+
         if obj is None:
             obj = context.active_object
 
         self.apply_to_bones(context, obj.pose.bones)
+        return {'FINISHED'}
+
+
+class ZENU_OT_generate_shape_enum(bpy.types.Operator):
+    bl_label = 'Generate Shape Enum'
+    bl_idname = 'zenu.generate_shape_enum'
+    bl_options = {'UNDO'}
+
+    def execute(self, context: bpy.types.Context):
+        path = get_path_to_asset('ZenuRigAssets.blend')
+
+        with bpy.data.libraries.load(path) as (data_from, data_to):
+            text = 'class ShapesEnum:'
+
+            for i in data_from.objects:
+                name = i.split("-")[1]
+                text += f"\n    {name} = '{i}'"
+            print(text)
+
         return {'FINISHED'}
 
 
@@ -167,6 +208,8 @@ class ZENU_PT_rig(BasePanel):
                 i.draw(context)
 
     def draw(self, context: bpy.types.Context):
+        # self.layout.operator(ZENU_OT_generate_shape_enum.bl_idname)
+
         obj = context.active_object
 
         if obj is None:
@@ -212,6 +255,7 @@ reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_rig,
     ZENU_OT_generate_rig,
     ZENU_OT_back_to_rig,
+    ZENU_OT_generate_shape_enum,
     MetaBone,
     RigProps,
     MetaBoneSettings,

@@ -1,5 +1,6 @@
 import typing
 from dataclasses import dataclass
+from inspect import currentframe, getframeinfo
 
 import bpy
 
@@ -49,7 +50,7 @@ class Keybindings:
             head=head
         )
         self._keys.append(Keybinding(bind=key_entry))
-
+        
     def remove(self, type: str):
         for i in self._keys:
             if i.bind.type == type:

@@ -1,8 +1,16 @@
+from ....utils import register_modules, unregister_modules
+from . import audio_view, loop_issues, time_ranges
+
+modules = (
+    audio_view,
+    loop_issues,
+    time_ranges
+)
 
 
 def register():
-    pass
+    register_modules(modules)
 
 
 def unregister():
-    pass
+    unregister_modules(modules)

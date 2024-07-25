@@ -90,7 +90,7 @@ class NodeSystem:
 
         if node_branch.name == NodeBranchType.EXECUTABLE:
             v = node_branch.value
-            v.node_tree = self._node_tree
+            # v.node_tree = self._node_tree
 
             if isinstance(node_branch.value, FunctionNode):
                 func = node_branch.value
@@ -171,11 +171,11 @@ def register():
     reg()
     nodeitems_utils.register_node_categories('CUSTOM', node_store.generate_nodes())
     bpy.types.NODE_HT_header.append(draw)
-    # bpy.app.handlers.frame_change_post.append(frame_update)
+    bpy.app.handlers.frame_change_post.append(frame_update)
 
 
 def unregister():
     unreg()
     nodeitems_utils.unregister_node_categories('CUSTOM')
     bpy.types.NODE_HT_header.remove(draw)
-    # bpy.app.handlers.frame_change_post.remove(frame_update)
+    bpy.app.handlers.frame_change_post.remove(frame_update)

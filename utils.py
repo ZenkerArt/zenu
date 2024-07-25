@@ -1,3 +1,5 @@
+import os
+
 import bpy.types
 from typing import TYPE_CHECKING
 
@@ -8,13 +10,76 @@ COLOR_ICONS = ('SEQUENCE_COLOR_01', 'SEQUENCE_COLOR_02', 'SEQUENCE_COLOR_03', 'S
                'SEQUENCE_COLOR_06', 'SEQUENCE_COLOR_07', 'SEQUENCE_COLOR_08', 'SEQUENCE_COLOR_09')
 
 
+def get_path_to_asset(filename: str):
+    return os.path.join(os.path.dirname(__file__), 'assets/', filename)
+
+
+def register_modules(modules):
+    for i in modules:
+        i.register()
+
+
+def unregister_modules(modules):
+    for i in modules:
+        try:
+            i.unregister()
+        except Exception as e:
+            print(e)
+
+
+def exit_from_nla(obj: bpy.types.Object):
+    area = None
+
+    for i in bpy.context.screen.areas:
+        if i.ui_type == 'NLA_EDITOR':
+            area = i
+
+    if area is None:
+        raise RuntimeError('NLA Area not found.')
+
+    with bpy.context.temp_override(area=area, active_object=obj, object=obj):
+        bpy.ops.nla.tweakmode_exit()
+
+
+def nla_pushdown(obj: bpy.types.Object):
+    area = None
+
+    for i in bpy.context.screen.areas:
+        if i.ui_type == 'NLA_EDITOR':
+            area = i
+
+    if area is None:
+        raise RuntimeError('NLA Area not found.')
+
+    with bpy.context.temp_override(area=area, active_object=obj, object=obj):
+        bpy.ops.nla.tracks_add()
+        bpy.ops.nla.action_pushdown()
+
+
+def nla_duplicate(obj: bpy.types.Object):
+    area = None
+
+    for i in bpy.context.screen.areas:
+        if i.ui_type == 'NLA_EDITOR':
+            area = i
+
+    if area is None:
+        raise RuntimeError('NLA Area not found.')
+
+    with bpy.context.temp_override(area=area, active_object=obj, object=obj):
+        bpy.ops.nla.duplicate()
+
+
 def update_window(all_w: bool = False):
-    for region in bpy.context.area.regions:
-        if all_w:
-            region.tag_redraw()
-            continue
-        if region.type == 'WINDOW':
-            region.tag_redraw()
+    try:
+        for region in bpy.context.area.regions:
+            if all_w:
+                region.tag_redraw()
+                continue
+            if region.type == 'WINDOW':
+                region.tag_redraw()
+    except AttributeError:
+        pass
 
 
 def get_prefs() -> 'ZenUtilsPreferences':
