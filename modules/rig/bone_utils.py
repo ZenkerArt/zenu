@@ -1,3 +1,5 @@
+import re
+
 import bpy.types
 from mathutils import Vector
 
@@ -22,7 +24,7 @@ def bone_name_format(bone: bpy.types.EditBone, name: str = None, prefix: str = N
     return name
 
 
-def _create_bone(bone: bpy.types.EditBone, name: str = None, prefix: str = None, postfix: str = None):
+def _create_bone(bone: bpy.types.EditBone, name: str = None, prefix: str = None, postfix: str = None) -> bpy.types.EditBone:
     name = bone_name_format(bone, name, prefix, postfix)
     return bone.id_data.edit_bones.new(name)
 
@@ -32,16 +34,23 @@ def bone_copy_transforms(src: bpy.types.EditBone, dst: bpy.types.EditBone):
     dst.matrix = src.matrix.copy()
 
 
+def bone_disable_deform(bones: list[bpy.types.EditBone]):
+    for bone in bones:
+        bone.use_deform = False
+
+
 def bone_clone(bone: bpy.types.EditBone, name: str = None, prefix: str = None,
                postfix: str = None) -> bpy.types.EditBone:
     """Work only in edit mode, not copy constraints, creates new bone with same transformations"""
     new_bone = _create_bone(bone, name, prefix, postfix)
+    new_bone.color.palette = bone.color.palette
     bone_copy_transforms(bone, new_bone)
 
     return new_bone
 
 
-def bone_create_lerp(bone: bpy.types.EditBone, factor: float, name: str = None, prefix: str = None, postfix: str = None):
+def bone_create_lerp(bone: bpy.types.EditBone, factor: float, name: str = None, prefix: str = None,
+                     postfix: str = None):
     new_bone = bone_clone(bone, name, prefix, postfix)
     new_bone.length = new_bone.length + 1
 
@@ -83,3 +92,26 @@ def bone_subdivide(bone: bpy.types.EditBone, subdivide: int, name: str = None) -
         bones.append(bone)
 
     return bones
+
+
+def bone_get_side(bone: any) -> str:
+    name: str = bone.name
+    name = name.lower()
+
+    n = re.findall(r'.*(left$|right$|[._\- ][lr]$)', name)
+
+    if n:
+        return n[0].upper()
+
+    return ''
+
+
+def bone_get_head(bone: bpy.types.PoseBone) -> Vector:
+    arm: bpy.types.Object = bone.id_data
+    mat = arm.matrix_world @ bone.matrix
+
+    return mat.translation
+
+
+def bone_get_tail(bone: bpy.types.PoseBone) -> Vector:
+    return bone_get_head(bone) + bone.vector

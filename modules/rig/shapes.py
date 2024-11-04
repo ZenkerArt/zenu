@@ -20,9 +20,12 @@ class ShapesEnum:
     ArrowTwoSide = 'WGT-ArrowTwoSide'
     Arrow = 'WGT-Arrow'
 
+
 def get_shape(name: str) -> bpy.types.Object | None:
     path = get_path_to_asset('ZenuRigAssets.blend')
     collection = get_collection('RIG_SHAPES')
+    collection.hide_viewport = True
+    collection.hide_render = True
     obj = collection.objects.get(name)
 
     if obj is not None:

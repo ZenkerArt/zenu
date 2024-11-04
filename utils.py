@@ -37,8 +37,12 @@ def exit_from_nla(obj: bpy.types.Object):
     if area is None:
         raise RuntimeError('NLA Area not found.')
 
-    with bpy.context.temp_override(area=area, active_object=obj, object=obj):
-        bpy.ops.nla.tweakmode_exit()
+    try:
+        with bpy.context.temp_override(area=area, active_object=obj, object=obj):
+            bpy.ops.nla.tweakmode_exit()
+        return True
+    except RuntimeError:
+        return False
 
 
 def nla_pushdown(obj: bpy.types.Object):
@@ -112,11 +116,6 @@ def get_collection(name: str, color: str = 'COLOR_04'):
 
     if collection:
         return collection
-
-    for coll in bpy.data.collections:
-        if not coll.is_lod:
-            continue
-        return coll
 
     collection = bpy.data.collections.new(name)
     collection.color_tag = color

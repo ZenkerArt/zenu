@@ -2,11 +2,11 @@ import os
 
 import bpy
 from rna_prop_ui import rna_idprop_quote_path
-from ...utils import is_type, get_path_to_asset, get_collection
+from ...utils import is_type, get_path_to_asset, get_collection, check_mods
 from .meta_bone import MetaBoneData
 from ...base_panel import BasePanel
-from .rigs import rig_modules
-
+from .rigs import rig_modules, RigModule
+from . import drivers
 rig_types = tuple((i.id, i.rig_name, '', i.n_id) for i in rig_modules)
 
 
@@ -86,6 +86,7 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
                 if meta.meta.type != module.id: continue
 
                 module.bone = meta
+                RigModule.pre_init(module)
 
                 bpy.ops.object.mode_set(mode='EDIT')
                 module.execute_edit(context)
@@ -135,6 +136,19 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
             new_obj.driver_remove(dr.data_path, -1)
 
         select_armature(context, new_obj)
+
+        for bone in new_obj.pose.bones:
+            for c in bone.constraints:
+                bone.constraints.remove(c)
+
+        keys = new_obj.keys()
+
+        if not len(keys):
+            return
+
+        for prop_name in keys:
+            if not prop_name.startswith('zenu_'): continue
+            del new_obj[prop_name]
         return new_obj
 
     def execute(self, context: bpy.types.Context):
@@ -142,10 +156,6 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
 
         if context.active_object.data.zenu_meta_settings.mode == MetaBoneMode.NEW:
             obj = self.prepare_new_armature(context)
-
-            for bone in obj.pose.bones:
-                for c in bone.constraints:
-                    bone.constraints.remove(c)
 
         if obj is None:
             obj = context.active_object
@@ -236,6 +246,19 @@ class ZENU_PT_rig(BasePanel):
 
             box.prop(obj, rna_idprop_quote_path(prop_name), text=new_name)
 
+        if not check_mods('p'):
+            return
+
+        bone = context.active_pose_bone
+        keys = bone.keys()
+        for prop_name in keys:
+            if not prop_name.startswith('zenu_'): continue
+            new_name = prop_name.replace('zenu_', '')
+            new_name = new_name.split('_')
+            new_name = ' '.join(new_name).title()
+
+            box.prop(bone, rna_idprop_quote_path(prop_name), text=new_name)
+
 
 dct = {}
 
@@ -269,6 +292,7 @@ def register():
     bpy.types.Bone.zenu_meta_props = bpy.props.PointerProperty(type=RigProps)
     bpy.types.Armature.zenu_meta_settings = bpy.props.PointerProperty(type=MetaBoneSettings)
     bpy.types.Armature.zenu_meta_deps = bpy.props.CollectionProperty(type=MetaBoneDep)
+    drivers.register()
 
     for module in rig_modules:
         module._register()
@@ -276,6 +300,7 @@ def register():
 
 def unregister():
     unreg()
+    drivers.unregister()
 
     for module in rig_modules:
         module._unregister()

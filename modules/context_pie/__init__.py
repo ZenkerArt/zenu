@@ -6,7 +6,8 @@ from .filters import any_object, only_armature, only_mesh, only_armature_weight,
 from .operator_view import OperatorView
 from .property_view import PropertyView
 from ..menu_manager import menu_3d_view, MenuManager, menu_timeline
-from ...keybindings import view_3d, dopesheet, graph_editor
+from ...keybindings import view_3d, dopesheet, graph_editor, sequence_editor
+
 
 @dataclass
 class PieMenuContext:
@@ -18,6 +19,7 @@ pie_menu_context = PieMenuContext(
     mouse_region_x=0,
     mouse_region_y=0
 )
+
 
 def create_layout(layout: bpy.types.UILayout) -> bpy.types.UILayout:
     actions_layout = layout.column(align=True)
@@ -81,7 +83,7 @@ class ZENU_MT_context(bpy.types.Menu):
         ]
 
         actions: list[OperatorView] = [
-            OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
+            # OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
         ]
 
         actions_sub_panel = [
@@ -161,6 +163,7 @@ def register():
     view_3d.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     dopesheet.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     graph_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
+    sequence_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
 
 
 def unregister():

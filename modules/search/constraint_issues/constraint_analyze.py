@@ -199,7 +199,7 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 def on_change_constraint(scene, context):
     try:
-        arm = context.active_object.data
+        arm = context.render_object.data
         selection: ConstraintData = arm.zenu_constraints_analyze[arm.zenu_constraints_analyze_active]
     except IndexError:
         return

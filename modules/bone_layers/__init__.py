@@ -21,7 +21,7 @@ enum_show_levels = (
 
 
 def update(self, context):
-    arm: bpy.types.Armature = context.active_object.data
+    arm: bpy.types.Armature = context.render_object.data
     for i in arm.collections:
         if self == i.zenu_layer:
             i.is_visible = self.is_visible

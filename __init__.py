@@ -2,7 +2,7 @@ from .utils import register_modules, unregister_modules
 from .modules import modules
 from .keybindings import key_spaces
 import bpy
-
+ 
 bl_info = {
     "name": "Zenu",
     "author": "Zenker",

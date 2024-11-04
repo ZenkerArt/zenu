@@ -1,7 +1,7 @@
 import uuid
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Any
 from hashlib import sha1
 import bpy.types
 from typing import TYPE_CHECKING
@@ -63,6 +63,54 @@ class RigStyleContainer:
                 print(e)
 
 
+class RigBoneCollection:
+    _obj: bpy.types.Object
+    _armature: bpy.types.Armature
+
+    def __init__(self, obj: bpy.types.Object):
+        self._obj = obj
+        self._armature = obj.data
+
+    def get_collection(self, name: str):
+        arm = self._armature
+        collection = arm.collections.get(name)
+
+        if collection is None:
+            collection = arm.collections.new(name)
+
+        return collection
+
+    def add_bone(self, name: str, bone: Any):
+        if hasattr(bone, 'collections'):
+            for i in bone.collections:
+                i.unassign(bone)
+
+        collection = self.get_collection(name)
+        collection.assign(bone)
+
+
+class RigBoneDefaultCollection:
+    _bone_collection: RigBoneCollection
+
+    def __init__(self, bone_collection: RigBoneCollection):
+        self._bone_collection = bone_collection
+
+    def add_deform(self, bone: Any):
+        self._bone_collection.add_bone('DEF', bone)
+
+    def add_mch(self, bone: Any):
+        self._bone_collection.add_bone('MCH', bone)
+
+    def add_tweakers(self, bone: Any):
+        self._bone_collection.add_bone('Tweakers', bone)
+
+    def add_fk(self, bone: Any):
+        self._bone_collection.add_bone('FK', bone)
+
+    def add_ik(self, bone: Any):
+        self._bone_collection.add_bone('IK', bone)
+
+
 class RigModule(ABC):
     _reg: Callable = None
     _unreg: Callable = None
@@ -72,12 +120,23 @@ class RigModule(ABC):
     layout: bpy.types.UILayout
     styles: RigStyleContainer
     bone: 'MetaBoneData'
+    collection: RigBoneCollection
+    coll: RigBoneDefaultCollection
 
     def __init__(self):
         self.id = sha1(fullname(self).encode()).hexdigest()
         self.n_id = int(self.id, 16) % (10 ** 4)
         self.styles = RigStyleContainer()
         self.init()
+
+    def _pre_init(self):
+        pass
+
+    @staticmethod
+    def pre_init(mod: 'RigModule'):
+        mod._pre_init()
+        mod.collection = RigBoneCollection(mod.bone.obj)
+        mod.coll = RigBoneDefaultCollection(mod.collection)
 
     def init(self):
         pass

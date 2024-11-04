@@ -1,33 +1,34 @@
 from . import timemarkers, \
     physic_manager, modifier_search, \
     lod_gen, utils_panel, \
-    context_pie, shape_key_bind, physic, \
-    mesh_utils, menu_manager, \
-    hair_physic_settings, ik_switcher, shape_utils, bone_layers, \
-    uv_utils, animation_utils, search, rig, constraint_utils, asset_browser_utils, deko_3d_model_teeth, stop_motion
+    context_pie, shape_key_bind, physic, menu_manager, \
+    hair_physic_settings, shape_utils, bone_layers, \
+    uv_utils, animation_utils, search, asset_browser_utils, render_settings, visualization, audio_gen, \
+    curve, rig, sequencer_utils, space_switcher, scenes_manager, materials, linked_object, bone_utils, assets_render
 
 modules = (
     uv_utils,
-    mesh_utils,
     shape_utils,
     animation_utils,
-    constraint_utils,
     utils_panel,
-    # physic_manager,
-    # curve,
     modifier_search,
     timemarkers,
     lod_gen,
     context_pie,
     shape_key_bind,
     hair_physic_settings,
-    # ik_switcher,
     bone_layers,
     search,
-    rig,
     asset_browser_utils,
-    deko_3d_model_teeth,
-    stop_motion
-    # bsync,
-    # test_node_tree, tests
+    render_settings,
+    visualization,
+    audio_gen,
+    curve, rig,
+    sequencer_utils,
+    space_switcher,
+    scenes_manager,
+    materials,
+    linked_object,
+    bone_utils,
+    assets_render
 )

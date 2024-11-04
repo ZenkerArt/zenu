@@ -51,8 +51,10 @@ class TentacleRig(RigModule):
         tweaker_center.use_deform = False
         if is_bbone:
             self.styles.add(tweaker_center.name, ShapesEnum.ArrowTwoSide)
+            self.coll.add_ik(tweaker_center)
         else:
             self.styles.add(tweaker_center.name, ShapesEnum.SphereDirWire)
+            self.coll.add_tweakers(tweaker_center)
 
         self.tweaker_connects.append(TweakerConnect(
             start=bone_start.name,
@@ -82,7 +84,11 @@ class TentacleRig(RigModule):
         tweaker = bone_create_lerp(bone, factor, postfix=TWEAKER_POSTFIX + '_TIP')
         tweaker.length = tweaker.length / 6
         tweaker.use_deform = False
-        self.bbone_parent.append((bone.name, tweaker.name))
+
+        if factor <= 0:
+            bone.parent = tweaker
+        else:
+            self.bbone_parent.append((bone.name, tweaker.name))
         self.styles.add(tweaker.name, ShapesEnum.SphereDirWire)
 
         return tweaker
@@ -93,58 +99,59 @@ class TentacleRig(RigModule):
         self.tweaker_connects.clear()
         self.armature_connects.clear()
 
-        subdivide = 2
+        start_bones = [self.bone.edit_bone]
+        start_bones.extend((i.edit_bone for i in self.bone.parent_list))
 
-        start_bones = bone_subdivide(self.bone.edit_bone, 2)
+        prev_bone = start_bones[-1]
+        prev_sub_bone = None
+        for current_bone in start_bones:
+            current_bone.use_deform = False
+            current_bone.use_connect = False
+            self.coll.add_mch(current_bone)
 
-        for i in start_bones:
-            i.use_deform = False
+            if prev_bone:
+                self.connect_tweaker(current_bone, prev_bone, is_bbone=True)
 
-        bone_start = start_bones[0]
-        bone_end = start_bones[1]
+                pb = None
 
-        self.connect_tweaker(bone_start, bone_end, is_bbone=True)
-        self.create_end_tweaker(bone_end)
+                bones = bone_subdivide(current_bone, 3)
 
-        bones = bone_subdivide(bone_start, 3)
+                for bone in bones:
+                    self.coll.add_deform(bone)
+                    if pb is None:
+                        pb = bone
+                        continue
 
-        prev_bone = None
-        for bone in bones:
-            if prev_bone is None:
-                prev_bone = bone
-                continue
+                    tweaker = self.connect_tweaker(pb, bone)
 
-            tweaker = self.connect_tweaker(prev_bone, bone)
+                    self.armature_connects.append(ArmatureConnect(
+                        bones=[current_bone.name],
+                        tweaker=tweaker.name
+                    ))
 
-            self.armature_connects.append(ArmatureConnect(
-                bones=[bone_start.name],
-                tweaker=tweaker.name
-            ))
+                    pb = bone
 
-            prev_bone = bone
+                tweaker = self.create_end_tweaker(pb)
 
-        bones = bone_subdivide(bone_end, 3)
-        for index, bone in enumerate(bones):
-            if prev_bone is None:
-                prev_bone = bone
-                continue
+                if prev_sub_bone:
+                    prev_sub_bone.parent = tweaker
 
-            tweaker = self.connect_tweaker(prev_bone, bone)
-            arr = [bone_end.name]
-            if index == 0:
-                arr.append(bone_start.name)
+                    self.armature_connects.append(ArmatureConnect(
+                        bones=[prev_bone.name, current_bone.name],
+                        tweaker=tweaker.name
+                    ))
+                else:
+                    self.armature_connects.append(ArmatureConnect(
+                        bones=[current_bone.name],
+                        tweaker=tweaker.name
+                    ))
 
-            self.armature_connects.append(ArmatureConnect(
-                bones=arr,
-                tweaker=tweaker.name
-            ))
+                prev_sub_bone = bones[0]
 
-            prev_bone = bone
+            prev_bone = current_bone
 
-        self.armature_connects.append(ArmatureConnect(
-            bones=[bone_end.name],
-            tweaker=self.create_end_tweaker(bones[-1]).name
-        ))
+        # self.create_end_tweaker(start_bones[0])
+        self.create_end_tweaker(start_bones[-1], 0)
 
     def execute_pose(self, context: bpy.types.Context):
         arm_obj = self.bone.obj

@@ -5,6 +5,7 @@ from typing import Any
 
 import bpy
 import gpu
+from bl_math import lerp
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 from ...base_panel import BasePanel
@@ -19,6 +20,7 @@ def create_shader():
     shader_info = gpu.types.GPUShaderCreateInfo()
     shader_info.push_constant('MAT4', "viewProjectionMatrix")
     shader_info.push_constant('VEC3', "offset")
+    shader_info.push_constant('VEC3', "color")
     shader_info.push_constant('FLOAT', "size")
     shader_info.vertex_in(0, 'VEC3', "position")
     shader_info.vertex_out(vert_out)
@@ -35,7 +37,7 @@ def create_shader():
     shader_info.fragment_source(
         "void main()"
         "{"
-        "  FragColor = vec4(vec3(1, 1, 0), 1.0);"
+        "  FragColor = vec4(color, 1.0);"
         "}"
     )
 
@@ -84,6 +86,16 @@ class Beizer:
     p1: Vector = field(default_factory=partial(Vector, (0, 0, 0)))
     p2: Vector = field(default_factory=partial(Vector, (0, 0, 0)))
     p3: Vector = field(default_factory=partial(Vector, (0, 0, 0)))
+    attributes: dict[str, float] = field(default_factory=lambda: {'angle': 0})
+
+
+@dataclass()
+class BeizerPoint:
+    pos: Vector
+    time: float = 0
+    attributes: dict[str, float] = field(default_factory=lambda: {'angle': 0})
+    next_point: 'BeizerPoint' = None
+    prev_point: 'BeizerPoint' = None
 
 
 class ShaderDraw:
@@ -142,24 +154,32 @@ def create_sphere():
     return coords
 
 
-class CurveDraw(GpuDrawer):
-    draws: list[ShaderDraw]
-    _point: ShaderDraw
-    _points: list[Vector]
+@dataclass()
+class Point:
+    pos: Vector
+    color: Vector = (0, 1, 0)
+    scale: float = .01
+
+
+class CurveDraw:
+    _points: list[Point]
+    _beizer_points: list[BeizerPoint]
+    _beizer_list: list[Beizer]
 
     def __init__(self):
-        self.draws = []
-        self.rebuild()
-        self._point = ShaderDraw.from_shader({'position': create_sphere()}, create_shader(), type='LINES')
-        self._points = []
-        b = Beizer(
-            p0=Vector((-5, 0, -1)),
-            p1=Vector((-1, 0, 1)),
-            p2=Vector((1, 0, 1)),
-            p3=Vector((1, 0, -1))
-        )
+        self._beizer_list = [
+            Beizer(
+                p0=Vector((-5, 0, -1)),
+                p1=Vector((-1, 0, 1)),
+                p2=Vector((1, 0, 1)),
+                p3=Vector((1, 0, -1))
+            )
 
-    def calc_beizer(self, beizer: Beizer, t: float) -> Vector:
+        ]
+        self._beizer_points = []
+        self.rebuild()
+
+    def calc_beizer(self, beizer: Beizer, t: float) -> BeizerPoint:
         p0 = beizer.p0
         p1 = beizer.p1
         p2 = beizer.p2
@@ -172,9 +192,12 @@ class CurveDraw(GpuDrawer):
         d = a.lerp(b, t)
 
         e = b.lerp(c, t)
-        return d.lerp(e, t)
+        return BeizerPoint(
+            pos=d.lerp(e, t),
+            time=t
+        )
 
-    def beizer_to_points(self, beizer: Beizer, quality: int = 40):
+    def beizer_to_points(self, beizer: Beizer, quality: int = 60):
         points = []
         for i in range(0, quality + 1):
             points.append(self.calc_beizer(beizer, i / quality))
@@ -184,80 +207,83 @@ class CurveDraw(GpuDrawer):
         coords = [beizer.p0, beizer.p1, beizer.p2, beizer.p3]
         return coords
 
+    def add(self, bezier: Beizer):
+        self._beizer_list.append(bezier)
+
+    def clear(self):
+        self._beizer_list.clear()
+        self._beizer_points.clear()
+
     def rebuild(self):
-        b = self.draws
+        self._beizer_points.clear()
 
-        self.draws.clear()
-        self.draws.append(ShaderDraw.from_builtin(coords=self.beizer_to_points(b), type='LINE_STRIP'))
-        self.draws.append(ShaderDraw.from_builtin(coords=self.beizer_controllers(b), type='LINES'))
+        prev_beizer = None
+        prev_value = 0
+        for index, beizer in enumerate(self._beizer_list):
+            points = self.beizer_to_points(beizer)
+            for key, value in beizer.attributes.items():
+                if prev_beizer:
+                    prev_value = prev_beizer.attributes[key]
 
-        self._points.clear()
-        self._points.append(b.p0)
-        self._points.append(b.p1)
-        self._points.append(b.p2)
-        self._points.append(b.p3)
+                for index, point in enumerate(points):
+                    point.attributes[key] = lerp(value, prev_value, point.time)
 
-    def draw(self):
-        for i in self.draws:
-            shad = i.shader
-            shad.uniform_float('color', (1, 1, 1, 1))
-            i.draw()
+            if index > 0:
+                del points[0]
 
-        shad = self._point.shader
-        matrix = bpy.context.region_data.perspective_matrix
-        shad.uniform_float("viewProjectionMatrix", matrix)
+            self._beizer_points.extend(reversed(points))
+            prev_beizer = beizer
 
-        for i in self._points:
-            shad.uniform_float('size', .2)
-            shad.uniform_float('offset', i)
-            self._point.draw()
+        points = self._beizer_points
+        for index, point in enumerate(points):
+            # self.add_point(point.pos, color=(0, 0, 1), size=.02)
+            try:
+                point.next_point = points[index - 1]
+            except IndexError:
+                pass
+            try:
+                point.prev_point = points[index + 1]
+            except IndexError:
+                pass
 
+    def get_closer_point(self, pos: Vector) -> BeizerPoint:
+        length = float('inf')
 
-class ModalOperator(bpy.types.Operator):
-    bl_idname = "zenu.edit_curve"
-    bl_label = "Edit Curve"
+        current_point = None
 
-    def __init__(self):
-        pass
+        for point in self._beizer_points:
+            diff = point.pos - pos
+            leng = abs(diff.length)
 
-    def __del__(self):
-        pass
+            if leng < length:
+                length = leng
+                current_point = point
+        return current_point
 
-    def execute(self, context):
-        pass
-        return {'FINISHED'}
+    def get_closer_point_lerp(self, pos: Vector) -> BeizerPoint:
+        current_point = self.get_closer_point(pos)
+        if current_point.prev_point is None:
+            return current_point
 
-    def modal(self, context, event):
-        if event.type == 'MOUSEMOVE':  # Apply
-            self.value = event.mouse_x
-            self.execute(context)
-        elif event.type == 'LEFTMOUSE':  # Confirm
-            return {'FINISHED'}
-        elif event.type in {'RIGHTMOUSE', 'ESC'}:  # Cancel
-            # Revert all changes that have been made
-            context.object.location.x = self.init_loc_x
-            return {'CANCELLED'}
+        prev_point = current_point.prev_point
+        next_point = current_point.next_point
 
-        return {'RUNNING_MODAL'}
+        full_length = abs((prev_point.pos - next_point.pos).length)
 
-    def invoke(self, context, event):
-        self.init_loc_x = context.object.location.x
-        self.value = event.mouse_x
-        self.execute(context)
+        pos_point_length = abs(1 - abs((pos - next_point.pos).length) / full_length)
 
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
+        new_pos = prev_point.pos.lerp(next_point.pos, pos_point_length)
 
+        new_attributes = {}
+        for key, next_value in next_point.attributes.items():
+            prev_value = next_point.next_point.attributes[key]
 
-curve = CurveDraw()
+            new_attributes[key] = lerp(prev_value, next_value, pos_point_length)
 
-
-def update(self, scene):
-    curve.rebuild()
-
-
-class DrawTest(bpy.types.PropertyGroup):
-    t: bpy.props.FloatProperty(default=0, min=0, max=1, update=update, subtype='FACTOR')
+        return BeizerPoint(
+            pos=new_pos,
+            attributes=new_attributes
+        )
 
 
 class ZENU_PT_curve(BasePanel):
@@ -270,17 +296,13 @@ class ZENU_PT_curve(BasePanel):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
-    DrawTest,
-    ZENU_PT_curve
+    ZENU_PT_curve,
 ))
 
 
 def register():
     reg()
-    bpy.types.Scene.zenu_draw_test = bpy.props.PointerProperty(type=DrawTest)
-    # curve.register()
 
 
 def unregister():
     unreg()
-    # curve.unregister()
