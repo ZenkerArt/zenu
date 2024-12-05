@@ -35,4 +35,11 @@ def get_shape(name: str) -> bpy.types.Object | None:
         data_to.objects = [name]
 
     collection.objects.link(data_to.objects[0])
-    return data_to.objects[0]
+    obj = data_to.objects[0]
+
+    for mod in obj.modifiers:
+        obj: bpy.types.Object
+        if mod.name.startswith('[REMOVE]'):
+            obj.modifiers.remove(mod)
+
+    return obj

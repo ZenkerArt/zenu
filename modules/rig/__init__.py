@@ -130,10 +130,13 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
         new_obj.data.name = f'{name}_Generated'
         new_obj.name = original_obj.name + '_Edit'
 
-        drivers_data = new_obj.animation_data.drivers
+        try:
+            drivers_data = new_obj.animation_data.drivers
 
-        for dr in drivers_data:
-            new_obj.driver_remove(dr.data_path, -1)
+            for dr in drivers_data:
+                new_obj.driver_remove(dr.data_path, -1)
+        except Exception:
+            pass
 
         select_armature(context, new_obj)
 

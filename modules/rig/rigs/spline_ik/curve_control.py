@@ -71,6 +71,6 @@ class CurveControl:
 
             hook.vertex_indices_set(indices)
 
-        shape = get_shape(ShapesEnum.SphereDirWire)
+        shape = get_shape('WGT-CubeWire')
         for i in self._spline_controls:
             i.apply_theme(shape)
