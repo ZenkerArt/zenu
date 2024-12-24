@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+
 import bpy
 
 
@@ -25,3 +27,30 @@ class AudioTriggerPoint(bpy.types.PropertyGroup):
     shape: bpy.props.EnumProperty(items=(
         ('Point', 'POINT', ''),
     ))
+
+
+@dataclass
+class TriggerCalcResult:
+    trigger: AudioTrigger
+    radius: float
+    is_triggered: bool
+    points: list[AudioTriggerPoint] = field(default_factory=list)
+
+    @property
+    def name(self):
+        return self.trigger.name
+
+
+@dataclass()
+class RealtimeData:
+    is_record: bool = False
+    triggered: dict[str, bool] = field(default_factory=dict)
+
+    def on_frame_update(self, triggers: list[TriggerCalcResult]):
+        pass
+
+    def on_end(self):
+        pass
+
+
+realtime_data = RealtimeData()

@@ -165,6 +165,9 @@ class SpacesDrawer(GpuDrawer):
         scene = context.scene
         settings: TimelineAudio = get_timeline_audio(context)
 
+        if not hasattr(settings, 'enable'):
+            return
+
         if settings.enable is False:
             return
 

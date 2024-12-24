@@ -1,0 +1,220 @@
+import json
+import os.path
+import random
+
+import bpy
+from bpy_extras.io_utils import ImportHelper
+from .property_groups import TriggerCalcResult, realtime_data
+from .utils import calc_triggers, get_active_point, get_active_point_index, get_active_trigger, get_active_index, \
+    add_sound, add_video
+from ...utils import get_collection
+
+
+class ZENU_OT_trigger_action(bpy.types.Operator):
+    bl_label = 'Trigger Action'
+    bl_idname = 'zenu.trigger_action'
+    bl_options = {'UNDO'}
+    type: bpy.props.EnumProperty(items=(
+        ('POINT', 'Add', ''),
+        ('TRIGGER', 'Remove', '')
+    ))
+    action: bpy.props.EnumProperty(items=(
+        ('ADD', 'Add', ''),
+        ('REMOVE', 'Remove', ''),
+        ('CLEAR', 'Clear', ''),
+    ))
+
+    def execute(self, context: bpy.types.Context):
+        if self.type == 'POINT':
+            data = context.scene.zenu_at_point
+            tri_obj = get_active_point()
+            index = get_active_point_index()
+            action_display = 'PLAIN_AXES'
+            name = 'TriggerPoint'
+        else:
+            data = context.scene.zenu_at
+            tri_obj = get_active_trigger()
+            index = get_active_index()
+            action_display = 'SPHERE'
+            name = 'Trigger'
+
+        if self.action == 'ADD':
+            coll = get_collection('AudioGen')
+            obj = bpy.data.objects.new(name, None)
+            coll.objects.link(obj)
+
+            trigger = data.add()
+            trigger.obj = obj
+
+            obj.empty_display_type = action_display
+        elif self.action == 'REMOVE':
+            bpy.data.objects.remove(tri_obj.obj, do_unlink=True)
+            data.remove(index)
+        elif self.action == 'CLEAR':
+            data.clear()
+
+        return {'FINISHED'}
+
+
+class ZENU_OT_calculate_triggers(bpy.types.Operator):
+    bl_label = 'Calculate Tringgers'
+    bl_idname = 'zenu.calculate_triggers'
+
+    def execute(self, context: bpy.types.Context):
+        scene = context.scene
+        triggered = {}
+        data = {}
+        s = scene.sequence_editor.sequences
+
+        for key, item in s.items():
+            if item.channel == 3:
+                s.remove(item)
+
+        for i in range(scene.frame_start, scene.frame_end + 1):
+            triggers = calc_triggers()
+            index = i - 1
+
+            for trigger in triggers:
+                t = triggered.get(trigger.name)
+
+                if t is not None and t != trigger.is_triggered:
+                    add_sound(t, trigger, index)
+                    data[index] = t
+
+                triggered[trigger.name] = trigger.is_triggered
+
+            scene.frame_set(i)
+
+        return {'FINISHED'}
+
+
+class ZENU_OT_calculate_triggers_realtime(bpy.types.Operator):
+    bl_label = 'Realtime calc'
+    bl_idname = 'zenu.calculate_triggers_realtime'
+    bl_options = {'UNDO'}
+
+    @staticmethod
+    def add_audio(triggers: list[TriggerCalcResult]):
+        scene = bpy.context.scene
+        frame = scene.frame_current
+        for trigger in triggers:
+            t = realtime_data.triggered.get(trigger.name)
+
+            if t is not None and t != trigger.is_triggered:
+                add_sound(t, trigger, frame)
+
+            realtime_data.triggered[trigger.name] = trigger.is_triggered
+
+    def execute(self, context: bpy.types.Context):
+        s: dict[str, bpy.types.Sequence] = context.scene.sequence_editor.sequences
+
+        for key, item in s.items():
+            if item.channel == 3:
+                s.remove(item)
+
+        realtime_data.is_record = True
+        realtime_data.on_frame_update = self.add_audio
+
+        context.scene.frame_set(context.scene.frame_start)
+        bpy.ops.screen.animation_play()
+        return {'FINISHED'}
+
+
+data_global = {
+    'triggers': []
+}
+
+
+class ZENU_OT_calculate_triggers_realtime_clipboard(bpy.types.Operator):
+    bl_label = 'Realtime calc clipboard'
+    bl_idname = 'zenu.calculate_triggers_realtime_clipboard'
+    bl_options = {'UNDO'}
+
+    @staticmethod
+    def add_audio(triggers: list[TriggerCalcResult]):
+
+        scene = bpy.context.scene
+        frame = scene.frame_current
+        for trigger in triggers:
+            t = realtime_data.triggered.get(trigger.name)
+
+            if t is not None and t != trigger.is_triggered:
+                if not t:
+                    data_global['triggers'].append((
+                        frame
+                    ))
+
+            realtime_data.triggered[trigger.name] = trigger.is_triggered
+
+    @staticmethod
+    def on_end():
+        bpy.context.window_manager.clipboard = json.dumps(data_global)
+
+    def execute(self, context: bpy.types.Context):
+        data_global['triggers'].clear()
+        realtime_data.is_record = True
+        realtime_data.on_frame_update = self.add_audio
+        realtime_data.on_end = self.on_end
+
+        context.scene.frame_set(context.scene.frame_start)
+        bpy.ops.screen.animation_play()
+        return {'FINISHED'}
+
+
+class ZENU_OT_pasts_videos_from_clipboard(bpy.types.Operator):
+    bl_label = 'Past Videos From Clipboard'
+    bl_idname = 'zenu.pasts_videos_from_clipboard'
+
+    def execute(self, context: bpy.types.Context):
+        data = json.loads(bpy.context.window_manager.clipboard)
+
+        for frame in data['triggers']:
+            add_video(frame, r'C:\Users\zenke\Desktop\BlenderProjects\Addons\Zenu\Bounces', 'Video').blend_type = 'ADD'
+        bpy.context.active_sequence_strip.blend_type = 'ADD'
+
+        return {'FINISHED'}
+
+
+class ZENU_random_audio_import(bpy.types.Operator, ImportHelper):
+    bl_idname = "zenu.random_audio_import"  # important since its how bpy.ops.import_test.some_data is constructed
+    bl_label = "Random Audio Import"
+
+    # ImportHelper mixin class uses this
+    filename_ext = ".txt"
+
+    filter_glob: bpy.props.StringProperty(
+        default="*.mp3;*.wav;*.flac",
+        options={'HIDDEN'},
+    )
+
+    filename: bpy.props.StringProperty(maxlen=1024)
+    directory: bpy.props.StringProperty(maxlen=1024)
+
+    files: bpy.props.CollectionProperty(name='File paths', type=bpy.types.OperatorFileListElement)
+
+    def execute(self, context):
+        # print()
+        files: list[str] = [os.path.join(self.directory, file.name) for file in self.files]
+
+        for seq in context.selected_sequences:
+            if seq.type != 'SOUND':
+                continue
+            seq: bpy.types.SoundSequence
+
+            file = random.choice(files)
+            sound = bpy.data.sounds.load(file, check_existing=True)
+
+            # print(seq, sound)
+            seq.sound = sound
+
+        return {'FINISHED'}
+
+
+classes = (
+    ZENU_OT_trigger_action,
+    ZENU_OT_calculate_triggers,
+    ZENU_OT_calculate_triggers_realtime,
+    ZENU_OT_calculate_triggers_realtime_clipboard,
+    ZENU_OT_pasts_videos_from_clipboard,
+    ZENU_random_audio_import
+)
