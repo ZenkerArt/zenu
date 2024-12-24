@@ -17,15 +17,13 @@ resolutions_vr = [
 ]
 
 
-def setup_vr(context: bpy.types.Context):
+def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
     scene = context.scene
 
     scene.render.image_settings.views_format = 'STEREO_3D'
     scene.render.image_settings.stereo_3d_format.display_mode = 'SIDEBYSIDE'
     scene.render.use_multiview = True
 
-    camera_obj = scene.camera
-
     if camera_obj is None:
         return {'FINISHED'}
 
@@ -33,17 +31,24 @@ def setup_vr(context: bpy.types.Context):
     camera.panorama_type = 'EQUIRECTANGULAR'
 
 
-def setup_2d(context: bpy.types.Context):
+def setup_2d(context: bpy.types.Context, camera_obj: bpy.types.Object):
     scene = context.scene
     scene.render.use_multiview = False
 
-    camera_obj = scene.camera
-
     if camera_obj is None:
         return {'FINISHED'}
 
     camera: bpy.types.Camera = camera_obj.data
     camera.panorama_type = 'EQUIRECTANGULAR'
+
+
+def camera_poll(self, obj):
+    return isinstance(obj.data, bpy.types.Camera)
+
+
+class RenderSetupSettings(bpy.types.PropertyGroup):
+    camera_2d: bpy.props.PointerProperty(type=bpy.types.Object, name='Camera 2D', poll=camera_poll)
+    camera_vr: bpy.props.PointerProperty(type=bpy.types.Object, name='Camera VR', poll=camera_poll)
 
 
 class ZENU_OT_setup_render(bpy.types.Operator):
@@ -58,15 +63,21 @@ class ZENU_OT_setup_render(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         update_window()
+        scene = context.scene
 
         context.scene.render.resolution_x = self.width
         context.scene.render.resolution_y = self.height
+        settings: RenderSetupSettings = scene.zenu_render_setup
+
+        print(settings)
 
         if self.render_type == 'vr':
-            setup_vr(context)
+            setup_vr(context, settings.camera_vr)
+            scene.camera = settings.camera_vr
 
         if self.render_type == '2d':
-            setup_2d(context)
+            setup_2d(context, settings.camera_2d)
+            scene.camera = settings.camera_2d
         return {'FINISHED'}
 
 
@@ -110,10 +121,13 @@ class ZENU_PT_render_settings(BasePanel):
         context = bpy.context
         rd = bpy.context.scene.render
         resolution_hash = rd.resolution_x + rd.resolution_y
+        scene = context.scene
+        settings: RenderSetupSettings = scene.zenu_render_setup
 
         layout.label(text='2D Setup')
-
-        row = layout.row(align=True)
+        col = layout.column_flow(align=True)
+        col.prop(settings, 'camera_2d', text='')
+        row = col.row(align=True)
         for width, height, type in resolutions_2d:
             cur_hash = width + height
             op = row.operator(ZENU_OT_setup_render.bl_idname, text=type, depress=cur_hash == resolution_hash)
@@ -122,7 +136,9 @@ class ZENU_PT_render_settings(BasePanel):
             op.render_type = '2d'
 
         layout.label(text='VR Setup')
-        row = layout.row(align=True)
+        col = layout.column_flow(align=True)
+        col.prop(settings, 'camera_vr', text='')
+        row = col.row(align=True)
         for width, height, type in resolutions_vr:
             cur_hash = width + height
             op = row.operator(ZENU_OT_setup_render.bl_idname, text=type, depress=cur_hash == resolution_hash)
@@ -202,28 +218,24 @@ class ZENU_PT_render_settings(BasePanel):
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
-        camera = context.scene.camera
 
         self.render_setups(layout)
 
-        # layout.operator(ZENU_OT_setup_render_vr.bl_idname)
-
         self.color_management(layout)
         self.render_output(layout)
-
-        # if camera is not None:
-        #     self.draw_camera_settings(layout, camera)
 
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_setup_render,
     ZENU_OT_set_sample,
     ZENU_PT_render_settings,
+    RenderSetupSettings
 ))
 
 
 def register():
     reg()
+    bpy.types.Scene.zenu_render_setup = bpy.props.PointerProperty(type=RenderSetupSettings)
 
 
 def unregister():

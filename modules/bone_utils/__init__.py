@@ -15,7 +15,6 @@ PREFIX_DATA = 'zenu_prefix'
 images = []
 preview_collections = {}
 pcoll: ImagePreviewCollection = None
-shapes_conf: ShapesConfig = ShapesConfig()
 
 
 def enum_previews_from_directory_items(self, context):
@@ -202,9 +201,6 @@ class ZENU_PT_bone_utils(BasePanel):
             self.color_picker(context, body)
 
 
-
-
-
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_mark_bone,
     ZENU_OT_bone_change_color,
@@ -215,9 +211,6 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 def register():
     global pcoll
-
-    with open(get_path_to_asset('shapeconf.shapes'), mode='rb') as fs:
-        shapes_conf.shapes = pickle.loads(fs.read()).shapes
 
     WindowManager.my_previews = bpy.props.EnumProperty(
         items=enum_previews_from_directory_items,
