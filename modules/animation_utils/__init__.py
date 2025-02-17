@@ -5,7 +5,7 @@ from ..menu_manager import menu_timeline
 from . import animation_offset, smart_noise
 from ..menu_manager.menu_group import OperatorItemList, OperatorItem
 from . import test
-from . import timeline, nla
+from . import timeline, nla, keying_set
 from ...utils import register_modules, unregister_modules
 
 reg, unreg = bpy.utils.register_classes_factory((
@@ -16,7 +16,8 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 modules = (
     timeline,
-    nla
+    nla,
+    keying_set
 )
 
 

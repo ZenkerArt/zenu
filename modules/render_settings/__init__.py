@@ -11,9 +11,9 @@ resolutions_2d = [
 
 resolutions_vr = [
     (1024, 1024, '2K'),
-    (2256, 2256, '4K'),
+    (2048, 2048, '4K'),
     (3056, 3056, '6K'),
-    (3840, 3840, '8K'),
+    (4096, 4096, '8K'),
 ]
 
 
@@ -28,7 +28,14 @@ def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
         return {'FINISHED'}
 
     camera: bpy.types.Camera = camera_obj.data
+    camera.type = 'PANO'
     camera.panorama_type = 'EQUIRECTANGULAR'
+    camera.stereo.convergence_mode = 'PARALLEL'
+
+    camera.longitude_min = -1.5708
+    camera.longitude_max = 1.5708
+    camera.stereo.use_spherical_stereo = True
+    camera.stereo.pivot = 'CENTER'
 
 
 def setup_2d(context: bpy.types.Context, camera_obj: bpy.types.Object):
@@ -69,7 +76,6 @@ class ZENU_OT_setup_render(bpy.types.Operator):
         context.scene.render.resolution_y = self.height
         settings: RenderSetupSettings = scene.zenu_render_setup
 
-        print(settings)
 
         if self.render_type == 'vr':
             setup_vr(context, settings.camera_vr)
@@ -139,6 +145,8 @@ class ZENU_PT_render_settings(BasePanel):
         col = layout.column_flow(align=True)
         col.prop(settings, 'camera_vr', text='')
         row = col.row(align=True)
+        if settings.camera_vr:
+            col.prop(settings.camera_vr.data.stereo, 'interocular_distance')
         for width, height, type in resolutions_vr:
             cur_hash = width + height
             op = row.operator(ZENU_OT_setup_render.bl_idname, text=type, depress=cur_hash == resolution_hash)
@@ -218,6 +226,7 @@ class ZENU_PT_render_settings(BasePanel):
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
+        data: RenderSetupSettings = context.scene.zenu_render_setup
 
         self.render_setups(layout)
 

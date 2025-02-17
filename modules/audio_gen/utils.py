@@ -40,7 +40,9 @@ def calc_triggers():
         trigger: AudioTrigger
         trigger_obj: bpy.types.Object = trigger.obj
         radius = sum(trigger_obj.scale) / 3
+
         is_triggered = False
+
         triggered = TriggerCalcResult(
             trigger=trigger,
             radius=radius,
@@ -52,8 +54,12 @@ def calc_triggers():
             pos2 = trigger_obj.matrix_world.translation
 
             diff = pos1 - pos2
+
             is_triggered = abs(diff.length) < radius
             triggered.points.append(point)
+
+            if is_triggered:
+                break
 
         triggered.is_triggered = is_triggered
         triggered_list.append(triggered)
@@ -61,13 +67,13 @@ def calc_triggers():
     return triggered_list
 
 
-def get_active_index():
+def get_active_trigger_index():
     return bpy.context.scene.zenu_at_active
 
 
 def get_active_trigger() -> AudioTrigger | None:
     try:
-        return bpy.context.scene.zenu_at[get_active_point_index()]
+        return bpy.context.scene.zenu_at[get_active_trigger_index()]
     except IndexError:
         return None
 

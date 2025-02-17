@@ -5,8 +5,9 @@ import random
 import bpy
 from bpy_extras.io_utils import ImportHelper
 from .property_groups import TriggerCalcResult, realtime_data
-from .utils import calc_triggers, get_active_point, get_active_point_index, get_active_trigger, get_active_index, \
-    add_sound, add_video
+from .utils import calc_triggers, get_active_point, get_active_point_index, get_active_trigger, \
+    get_active_trigger_index, \
+    add_sound
 from ...utils import get_collection
 
 
@@ -15,8 +16,8 @@ class ZENU_OT_trigger_action(bpy.types.Operator):
     bl_idname = 'zenu.trigger_action'
     bl_options = {'UNDO'}
     type: bpy.props.EnumProperty(items=(
-        ('POINT', 'Add', ''),
-        ('TRIGGER', 'Remove', '')
+        ('POINT', 'Point', ''),
+        ('TRIGGER', 'Trigger', '')
     ))
     action: bpy.props.EnumProperty(items=(
         ('ADD', 'Add', ''),
@@ -34,7 +35,7 @@ class ZENU_OT_trigger_action(bpy.types.Operator):
         else:
             data = context.scene.zenu_at
             tri_obj = get_active_trigger()
-            index = get_active_index()
+            index = get_active_trigger_index()
             action_display = 'SPHERE'
             name = 'Trigger'
 
@@ -45,7 +46,6 @@ class ZENU_OT_trigger_action(bpy.types.Operator):
 
             trigger = data.add()
             trigger.obj = obj
-
             obj.empty_display_type = action_display
         elif self.action == 'REMOVE':
             bpy.data.objects.remove(tri_obj.obj, do_unlink=True)
@@ -120,18 +120,16 @@ class ZENU_OT_calculate_triggers_realtime(bpy.types.Operator):
         return {'FINISHED'}
 
 
-data_global = {
-    'triggers': []
-}
-
-
 class ZENU_OT_calculate_triggers_realtime_clipboard(bpy.types.Operator):
     bl_label = 'Realtime calc clipboard'
     bl_idname = 'zenu.calculate_triggers_realtime_clipboard'
     bl_options = {'UNDO'}
+    data_global = {
+        'triggers': []
+    }
 
-    @staticmethod
-    def add_audio(triggers: list[TriggerCalcResult]):
+    @classmethod
+    def add_audio(cls, triggers: list[TriggerCalcResult]):
 
         scene = bpy.context.scene
         frame = scene.frame_current
@@ -140,38 +138,24 @@ class ZENU_OT_calculate_triggers_realtime_clipboard(bpy.types.Operator):
 
             if t is not None and t != trigger.is_triggered:
                 if not t:
-                    data_global['triggers'].append((
+                    cls.data_global['triggers'].append((
                         frame
                     ))
 
             realtime_data.triggered[trigger.name] = trigger.is_triggered
 
-    @staticmethod
-    def on_end():
-        bpy.context.window_manager.clipboard = json.dumps(data_global)
+    @classmethod
+    def on_end(cls):
+        bpy.context.window_manager.clipboard = json.dumps(cls.data_global)
 
     def execute(self, context: bpy.types.Context):
-        data_global['triggers'].clear()
+        self.data_global['triggers'].clear()
         realtime_data.is_record = True
         realtime_data.on_frame_update = self.add_audio
         realtime_data.on_end = self.on_end
 
         context.scene.frame_set(context.scene.frame_start)
         bpy.ops.screen.animation_play()
-        return {'FINISHED'}
-
-
-class ZENU_OT_pasts_videos_from_clipboard(bpy.types.Operator):
-    bl_label = 'Past Videos From Clipboard'
-    bl_idname = 'zenu.pasts_videos_from_clipboard'
-
-    def execute(self, context: bpy.types.Context):
-        data = json.loads(bpy.context.window_manager.clipboard)
-
-        for frame in data['triggers']:
-            add_video(frame, r'C:\Users\zenke\Desktop\BlenderProjects\Addons\Zenu\Bounces', 'Video').blend_type = 'ADD'
-        bpy.context.active_sequence_strip.blend_type = 'ADD'
-
         return {'FINISHED'}
 
 
@@ -215,6 +199,5 @@ classes = (
     ZENU_OT_calculate_triggers,
     ZENU_OT_calculate_triggers_realtime,
     ZENU_OT_calculate_triggers_realtime_clipboard,
-    ZENU_OT_pasts_videos_from_clipboard,
     ZENU_random_audio_import
 )

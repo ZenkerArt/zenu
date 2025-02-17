@@ -29,6 +29,11 @@ class AudioTriggerPoint(bpy.types.PropertyGroup):
     ))
 
 
+class TriggerCache(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(default='')
+    data: bpy.props.StringProperty()
+
+
 @dataclass
 class TriggerCalcResult:
     trigger: AudioTrigger
