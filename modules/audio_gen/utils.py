@@ -19,19 +19,6 @@ def add_sound(state: bool, trigger: TriggerCalcResult, frame: int):
     s.new_sound(trigger.name, random.choice(files), 3, frame - 1)
 
 
-def add_video(frame: int, folder: str, name: str) -> bpy.types.MovieSequence:
-    scene = bpy.context.scene
-
-    folder = bpy.path.abspath(folder)
-    files = []
-    for file in os.scandir(folder):
-        files.append(file.path)
-    s = scene.sequence_editor.sequences
-    movie = s.new_movie(name, random.choice(files), 4, frame - 1)
-    print(f'add video {frame}')
-    return movie
-
-
 def calc_triggers():
     scene = bpy.context.scene
     triggered_list = []

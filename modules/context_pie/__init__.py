@@ -21,6 +21,24 @@ pie_menu_context = PieMenuContext(
 )
 
 
+class ZENU_OT_change_keying_set(bpy.types.Operator):
+    bl_label = 'Change Keying Set'
+    bl_idname = 'zenu.change_keying_set'
+    keying_set_name: bpy.props.StringProperty(name='Keying Set Name', default='Location & Rotation')
+
+    def execute(self, context: bpy.types.Context):
+        context.scene.keying_sets_all.active = dict(bpy.context.scene.keying_sets_all.items())[self.keying_set_name]
+        return {'FINISHED'}
+
+    @staticmethod
+    def depress(name: str):
+        if bpy.context.scene.keying_sets_all.active is None:
+            return False
+
+        val = bpy.context.scene.keying_sets_all.active.bl_label
+        return val == name
+
+
 def create_layout(layout: bpy.types.UILayout) -> bpy.types.UILayout:
     actions_layout = layout.column(align=True)
     actions_layout.scale_x = 1.5
@@ -76,20 +94,29 @@ class ZENU_MT_context(bpy.types.Menu):
             ],
             PropertyView(bpy.context.object.pose, 'use_mirror_x', any_object, text="X Mirror"),
             PropertyView(context.space_data.overlay, 'show_face_orientation', only_mesh, active_object=obj),
-            PropertyView(context.scene.render, 'use_simplify', any_object)
+            PropertyView(context.scene.render, 'use_simplify', any_object),
         ]
-
+        # bpy.data.scenes["Scene"].sync_mode
         modifiers: list[OperatorView] = [
         ]
 
         actions: list[OperatorView] = [
-            # OperatorView(obj, 'object.convert', text='Convert To Mesh', vars={'target': 'MESH'}),
+            OperatorView(obj, ZENU_OT_change_keying_set.bl_idname, text='LocRot',
+                         vars={'keying_set_name': 'Location & Rotation'},
+                         depress=ZENU_OT_change_keying_set.depress('Location & Rotation')),
+            OperatorView(obj, ZENU_OT_change_keying_set.bl_idname, text='LocRotScale',
+                         vars={'keying_set_name': 'Location, Rotation & Scale'},
+                         depress=ZENU_OT_change_keying_set.depress('Location, Rotation & Scale')),
+            OperatorView(obj, ZENU_OT_change_keying_set.bl_idname, text='Whole Character',
+                         vars={'keying_set_name': 'Whole Character'},
+                         depress=ZENU_OT_change_keying_set.depress('Whole Character')),
         ]
 
         actions_sub_panel = [
             PropertyView(obj_data, "display_type", only_armature, expand=True),
             PropertyView(obj, "display_type", only_mesh, expand=True),
             PropertyView(obj_data, "pose_position", only_armature, expand=True, use_row=True),
+            PropertyView(context.scene, 'sync_mode', any_object, expand=True, use_row=True)
         ]
 
         self.draw_menu(menu_3d_view, menu_context)
@@ -153,6 +180,7 @@ class ZENU_OT_open_context_pie(bpy.types.Operator):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
+    ZENU_OT_change_keying_set,
     ZENU_OT_open_context_pie,
     ZENU_MT_context
 ))

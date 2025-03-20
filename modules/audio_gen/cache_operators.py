@@ -7,7 +7,6 @@ import bpy as bpy
 from bpy_extras.io_utils import ImportHelper
 
 from .property_groups import TriggerCalcResult, realtime_data, TriggerCache
-from .utils import add_video
 import bpy
 
 
@@ -62,10 +61,10 @@ class ZENU_OT_pasts_videos_from_clipboard(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         data = json.loads(active_cache().data)['triggers']
 
-        for key, names in data.items():
-            if 'splash' in names:
-                add_video(int(key), r'C:\Users\zenke\Desktop\BlenderProjects\Addons\Zenu\Bounces',
-                          'Video').blend_type = 'ADD'
+        # for key, names in data.items():
+        #     if 'splash' in names:
+        #         add_video(int(key), r'C:\Users\zenke\Desktop\BlenderProjects\Addons\Zenu\Bounces',
+        #                   'Video').blend_type = 'ADD'
         return {'FINISHED'}
 
 

@@ -1,4 +1,5 @@
 import bpy
+from mathutils import Vector
 from ...base_panel import BasePanel
 from ...utils import update_window
 
@@ -15,6 +16,8 @@ resolutions_vr = [
     (3056, 3056, '6K'),
     (4096, 4096, '8K'),
 ]
+
+samples = [8, 32, 128, 256]
 
 
 def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
@@ -58,6 +61,23 @@ class RenderSetupSettings(bpy.types.PropertyGroup):
     camera_vr: bpy.props.PointerProperty(type=bpy.types.Object, name='Camera VR', poll=camera_poll)
 
 
+class ZENU_OT_set_render_settings(bpy.types.Operator):
+    bl_label = 'Set Render Settings'
+    bl_idname = 'zenu.set_render_settings'
+
+    samples: bpy.props.IntProperty(name='Samples', default=-1)
+    use_render_region: bpy.props.BoolProperty(name='Use Render Region', default=False)
+    use_simplify: bpy.props.BoolProperty(name='Use Simplify', default=False)
+    resolution: bpy.props.IntVectorProperty(name='Resolution', default=(-1, -1, -1))
+    render_type: bpy.props.EnumProperty(items=[
+        ('vr', 'Setup VR', ''),
+        ('2d', 'Setup 2D', '')
+    ])
+
+    def execute(self, context: bpy.types.Context):
+        return {'FINISHED'}
+
+
 class ZENU_OT_setup_render(bpy.types.Operator):
     bl_label = 'Set Resolution'
     bl_idname = 'zenu.set_resolution'
@@ -75,7 +95,6 @@ class ZENU_OT_setup_render(bpy.types.Operator):
         context.scene.render.resolution_x = self.width
         context.scene.render.resolution_y = self.height
         settings: RenderSetupSettings = scene.zenu_render_setup
-
 
         if self.render_type == 'vr':
             setup_vr(context, settings.camera_vr)
@@ -144,9 +163,11 @@ class ZENU_PT_render_settings(BasePanel):
         layout.label(text='VR Setup')
         col = layout.column_flow(align=True)
         col.prop(settings, 'camera_vr', text='')
+
         row = col.row(align=True)
         if settings.camera_vr:
             col.prop(settings.camera_vr.data.stereo, 'interocular_distance')
+
         for width, height, type in resolutions_vr:
             cur_hash = width + height
             op = row.operator(ZENU_OT_setup_render.bl_idname, text=type, depress=cur_hash == resolution_hash)
@@ -154,84 +175,53 @@ class ZENU_PT_render_settings(BasePanel):
             op.height = height
             op.render_type = 'vr'
 
-        layout.label(text='Samples')
-        row = layout.row(align=True)
-        for i in [32, 128, 512, 1024]:
-            op = row.operator(ZENU_OT_set_sample.bl_idname, text=f'{i}', depress=context.scene.cycles.samples == i)
-            op.samples = i
-
-    def color_management(self, layout: bpy.types.UILayout):
-        header, body = layout.panel('color_management', default_closed=True)
-        header: bpy.types.UILayout
-        body: bpy.types.UILayout
-        header.label(text='Color Management')
-
-        if body is None:
-            return
-        layout = body.column()
-
+    def render_settings(self, layout: bpy.types.UILayout):
+        context = bpy.context
+        scene = context.scene
+        layout.label(text='Settings')
         layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        scene = bpy.context.scene
-        view = scene.view_settings
-
-        flow = layout.grid_flow(row_major=True, columns=0, even_columns=False, even_rows=False, align=True)
-
-        col = flow.column()
-        col.prop(scene.display_settings, "display_device")
-
-        col.separator()
-
-        col.prop(view, "view_transform")
-        col.prop(view, "look")
-
-        col = flow.column()
-        col.prop(view, "exposure")
-        col.prop(view, "gamma")
-
-        col.separator()
-
-        col.prop(scene.sequencer_colorspace_settings, "name", text="Sequencer")
-
-    def render_output(self, layout: bpy.types.UILayout):
-        header, body = layout.panel('Output', default_closed=True)
-        header: bpy.types.UILayout
-        body: bpy.types.UILayout
-        header.label(text='Output')
-
-        if body is None:
-            return
-        layout = body.column()
-        layout.use_property_split = False
         layout.use_property_decorate = False
 
-        rd = bpy.context.scene.render
-        image_settings = rd.image_settings
+        col = layout.column(align=True)
+        col.prop(scene.render.image_settings, 'file_format')
+        col.prop(scene.render, 'filepath')
+        col.prop(scene, 'frame_step')
 
-        layout.prop(rd, "filepath", text="")
+        col.prop(scene.render, 'film_transparent')
+        if scene.render.film_transparent:
+            col.prop(scene.cycles, 'film_transparent_glass')
 
-        layout.use_property_split = True
+        col.prop(scene.render, 'use_border')
 
-        col = layout.column(heading="Saving")
-        col.prop(rd, "use_file_extension")
-        col.prop(rd, "use_render_cache")
+        col.prop(scene.render, 'use_simplify')
+        if scene.render.use_simplify:
+            box = col.box()
 
-        layout.template_image_settings(image_settings, color_management=False)
+            c = box.column(align=True)
+            c.prop(scene.render, 'simplify_subdivision_render', text='Render Sub')
+            c.prop(scene.cycles, 'texture_limit_render', text='Render Tex')
 
-        if not rd.is_movie_format:
-            col = layout.column(heading="Image Sequence")
-            col.prop(rd, "use_overwrite")
-            col.prop(rd, "use_placeholder")
+            c = box.column(align=True)
+            c.prop(scene.render, 'simplify_subdivision', text='Viewport Sub')
+            c.prop(scene.cycles, 'texture_limit', text='View Tex')
+
+        col.prop(scene.cycles, 'use_auto_tile')
+        if scene.cycles.use_auto_tile:
+            col.prop(scene.cycles, 'tile_size')
+            
+        col.prop(scene.render, 'use_persistent_data')
+
+        row = layout.row(align=True)
+        for i in samples:
+            op = row.operator(ZENU_OT_set_sample.bl_idname, text=f'{i}', depress=context.scene.cycles.samples == i)
+            op.samples = i
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
         data: RenderSetupSettings = context.scene.zenu_render_setup
 
         self.render_setups(layout)
-
-        self.color_management(layout)
-        self.render_output(layout)
+        self.render_settings(layout)
 
 
 reg, unreg = bpy.utils.register_classes_factory((

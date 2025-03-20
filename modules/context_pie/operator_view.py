@@ -9,6 +9,7 @@ class OperatorView:
     _ops: str
     _obj: bpy.types.Object
     _vars: dict[str, Any] = {}
+    _depress: bool = False
     layout: bpy.types.UILayout
 
     def __init__(self,
@@ -16,6 +17,7 @@ class OperatorView:
                  func: Callable[[bpy.types.Object], bool] = None,
                  text: str = '',
                  vars: dict[str, Any] = None,
+                 depress: bool = False
                  ):
 
         self._vars = vars
@@ -27,6 +29,7 @@ class OperatorView:
         self._ops = ops
         self._obj = obj
         self._name = text
+        self._depress = depress
 
     def set_name(self, name: str):
         self._name = name
@@ -45,7 +48,7 @@ class OperatorView:
             return
 
         if self._name:
-            op = layout.operator(self._ops, text=self._name)
+            op = layout.operator(self._ops, text=self._name, depress=self._depress)
         else:
             op = layout.operator(self._ops)
 
