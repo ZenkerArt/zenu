@@ -5,7 +5,7 @@ from . import timemarkers, \
     hair_physic_settings, shape_utils, bone_layers, \
     uv_utils, animation_utils, search, asset_browser_utils, \
     render_settings, visualization, audio_gen, rig, sequencer_utils, space_switcher, scenes_manager, materials, \
-    linked_object, bone_utils, assets_render, mesh_utils, bevel, modifier_asset
+    linked_object, bone_utils, assets_render, mesh_utils, bevel, modifier_asset, context_pie_new, vertex_paint, unity
 
 modules = (
     uv_utils,
@@ -16,6 +16,7 @@ modules = (
     timemarkers,
     lod_gen,
     context_pie,
+    context_pie_new,
     shape_key_bind,
     hair_physic_settings,
     bone_layers,
@@ -33,5 +34,7 @@ modules = (
     bone_utils,
     assets_render,
     mesh_utils,
-    modifier_asset
+    modifier_asset,
+    vertex_paint,
+    unity
 )

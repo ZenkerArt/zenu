@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import bpy
 from .bone_utils import bone_clone
+from ...utils import check_mods
+from mathutils import Vector
 
 if TYPE_CHECKING:
     from . import MetaBone
@@ -51,6 +53,19 @@ class MetaBoneData:
     def clone(self, name: str = None, prefix: str = None, postfix: str = None):
         """Work only in edit mode, not copy constraints, creates new bone with same transformations"""
         return bone_clone(self.edit_bone, name=name, prefix=prefix, postfix=postfix)
+
+    @property
+    def forward_vector(self):
+        if check_mods('P'):
+            forward: Vector = self.pose_bone.tail - self.pose_bone.head
+            forward.normalize()
+            return forward
+
+        if check_mods('E'):
+            forward: Vector = self.edit_bone.tail - self.edit_bone.head
+            forward.normalize()
+            return forward
+        return None
 
     @property
     def obj(self):

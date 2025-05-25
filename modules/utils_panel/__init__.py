@@ -4,6 +4,8 @@ import bpy
 from bpy.types import Context
 
 
+
+
 class ZENU_OT_change_display_type(bpy.types.Operator):
     bl_label = 'Change Display Type'
     bl_idname = 'zenu.change_display_type'

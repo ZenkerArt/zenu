@@ -125,6 +125,7 @@ def get_collection(name: str, color: str = 'COLOR_04'):
 
 
 def check_mods(mods: str):
+    mods = mods.lower()
     if bpy.context.object is None:
         return False
     args = []
