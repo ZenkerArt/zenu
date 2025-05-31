@@ -33,13 +33,13 @@ def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
     camera: bpy.types.Camera = camera_obj.data
     camera.type = 'PANO'
     camera.panorama_type = 'EQUIRECTANGULAR'
-    camera.stereo.convergence_mode = 'PARALLEL'
+    camera.stereo.convergence_mode = 'TOE'
 
     camera.longitude_min = -1.5708
     camera.longitude_max = 1.5708
-    camera.stereo.use_spherical_stereo = True
+    camera.stereo.use_spherical_stereo = False
     camera.stereo.pivot = 'CENTER'
-
+    camera.stereo.convergence_distance = 3
 
 def setup_2d(context: bpy.types.Context, camera_obj: bpy.types.Object):
     scene = context.scene
@@ -183,6 +183,13 @@ class ZENU_PT_render_settings(BasePanel):
         layout.use_property_decorate = False
 
         col = layout.column(align=True)
+        row = col.row(align=True)
+        for i in samples:
+            op = row.operator(ZENU_OT_set_sample.bl_idname, text=f'{i}', depress=context.scene.cycles.samples == i)
+            op.samples = i
+        col.prop(scene.cycles, 'samples', text='')
+
+        col = layout.column(align=True)
         col.prop(scene.render.image_settings, 'file_format')
         col.prop(scene.render, 'filepath')
         col.prop(scene, 'frame_step')
@@ -190,6 +197,7 @@ class ZENU_PT_render_settings(BasePanel):
         col.prop(scene.render, 'film_transparent')
         if scene.render.film_transparent:
             col.prop(scene.cycles, 'film_transparent_glass')
+
 
         col.prop(scene.render, 'use_border')
 
@@ -206,15 +214,14 @@ class ZENU_PT_render_settings(BasePanel):
             c.prop(scene.cycles, 'texture_limit', text='View Tex')
 
         col.prop(scene.cycles, 'use_auto_tile')
+
         if scene.cycles.use_auto_tile:
             col.prop(scene.cycles, 'tile_size')
-            
+
         col.prop(scene.render, 'use_persistent_data')
 
-        row = layout.row(align=True)
-        for i in samples:
-            op = row.operator(ZENU_OT_set_sample.bl_idname, text=f'{i}', depress=context.scene.cycles.samples == i)
-            op.samples = i
+
+
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
