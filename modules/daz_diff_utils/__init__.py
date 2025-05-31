@@ -1,16 +1,11 @@
 import gzip
 import json
 import os
-import zipfile
 from urllib.parse import urlparse, unquote
 
-import py7zr
-
 import bpy
-
-from ...base_panel import BasePanel
 from bpy_extras.io_utils import ImportHelper
-import pip
+from ...base_panel import BasePanel
 
 
 # https://bitbucket.org/Diffeomorphic/import_daz/src/master/load_json.py
