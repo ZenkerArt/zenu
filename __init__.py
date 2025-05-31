@@ -15,6 +15,7 @@ bl_info = {
 }
 
 
+
 class ZenUtilsPreferences(bpy.types.AddonPreferences):
     bl_idname = package_name
 
