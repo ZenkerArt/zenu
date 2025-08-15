@@ -76,6 +76,28 @@ class ZENU_OT_shape_mirror(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ZENU_OT_apply_active_shape(bpy.types.Operator):
+    bl_label = 'Apply Active Shape'
+    bl_idname = 'zenu.apply_active_shape'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context: bpy.types.Context):
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        obj = context.active_object
+        shape = obj.active_shape_key
+        shape_index = obj.active_shape_key_index
+
+        obj.active_shape_key_index = 0
+
+        bpy.ops.mesh.blend_from_shape(shape=shape.name, blend=shape.value)
+        shape.value = 0
+        obj.active_shape_key_index = shape_index
+        bpy.ops.object.mode_set(mode='OBJECT')
+        # obj.shape_key_remove(shape)
+        return {'FINISHED'}
+
+
 class ZENU_PT_shape_mirror(BasePanel):
     bl_label = 'Shape Mirror'
     bl_context = ''
@@ -93,10 +115,13 @@ class ZENU_PT_shape_mirror(BasePanel):
 
         layout.operator(ZENU_OT_shape_mirror.bl_idname)
 
+        layout.operator(ZENU_OT_apply_active_shape.bl_idname)
+
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_shape_mirror,
     ZENU_OT_shape_mirror,
+    ZENU_OT_apply_active_shape,
     ShapeMirror
 ))
 

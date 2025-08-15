@@ -46,7 +46,7 @@ class StandardIK(RigModule):
         bone = self.bone
         parent = bone.parent
 
-        constraint: bpy.types.KinematicConstraint = bone.obj.pose.bones[self.ik].constraints.new('IK')
+        constraint: bpy.types.KinematicConstraint = bone.obj.pose.bones[self.ik]._constraints.new('IK')
         constraint.chain_count = 2
 
         constraint.target = self.bone.obj

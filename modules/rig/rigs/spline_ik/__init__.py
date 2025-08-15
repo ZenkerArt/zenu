@@ -56,12 +56,12 @@ class SplineIKRig(RigModule):
 
     def apply_spline_ik(self, chain_length: int, spline: bpy.types.Object):
         spline_constraint: bpy.types.SplineIKConstraint = None
-        for i in self.bone.pose_bone.constraints:
+        for i in self.bone.pose_bone._constraints:
             if i.type == 'SPLINE_IK':
                 spline_constraint = i
 
         if spline_constraint is None:
-            spline_constraint = self.bone.pose_bone.constraints.new('SPLINE_IK')
+            spline_constraint = self.bone.pose_bone._constraints.new('SPLINE_IK')
 
         spline_constraint.target = spline
         spline_constraint.chain_count = chain_length + 1
