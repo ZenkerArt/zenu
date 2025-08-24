@@ -6,11 +6,14 @@ from . import (timemarkers, \
     uv_utils, animation_utils, search, asset_browser_utils, \
     render_settings, visualization, audio_gen, rig, sequencer_utils, space_switcher, scenes_manager, materials, \
     linked_object, bone_utils, assets_render, mesh_utils, bevel, modifier_asset, context_pie_new, vertex_paint, unity,
-               daz_diff_utils, proxy_meshes)
+               daz_diff_utils, proxy_meshes, overlapper, render_queue)
 
 modules = (
+    render_queue,
+    overlapper,
+    render_settings,
     uv_utils,
-    physic,
+    # physic,
     shape_utils,
     animation_utils,
     utils_panel,
@@ -24,7 +27,6 @@ modules = (
     # bone_layers,
     search,
     asset_browser_utils,
-    render_settings,
     # visualization,
     audio_gen,
     rig,

@@ -1,0 +1,35 @@
+{
+    "python.analysis.include": [
+        // "C:\\blender_autocomplete\\4.3",
+        "D:\\Addons\\zenu\\zenu\\modules",
+    ],
+    "python.analysis.extraPaths": [
+        "C:\\blender_autocomplete\\4.3",
+        "D:\\Addons\\zenu\\zenu\\modules",
+    ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportInvalidTypeForm": "none",
+        "reportUnusedClass": "warning",
+        "reportUnusedImport": "warning",
+        "reportUnusedFunction": "warning",
+        "reportUnusedVariable": "warning",
+        "reportUnusedExpression": "warning",
+        "reportAttributeAccessIssue": "warning",
+        "reportUndefinedVariable": "warning",
+        "reportDuplicateImport": "warning",
+        "reportInvalidTypeArguments": "warning",
+    },
+    "cSpell.words": [
+        "mathutils",
+        "overlapper",
+        "unreg",
+        "ZENU"
+    ],
+    "python.analysis.inlayHints.callArgumentNames": "off",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.diagnosticsSource": "Pylance",
+    "python.analysis.supportAllPythonDocuments": false,
+    "python.analysis.typeCheckingMode": "off",
+    // "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
+    "python.useEnvironmentsExtension": true,
+}

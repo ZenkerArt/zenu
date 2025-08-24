@@ -11,8 +11,8 @@ def apply_object_cloth_settings(obj: bpy.types.Object):
     if object_settings.ignore:
         return
 
-    cloth.point_cache.frame_start = scene_settings.start + object_settings.start
-    cloth.point_cache.frame_end = scene_settings.end + object_settings.end
+    cloth.point_cache.frame_start = scene_settings.start + object_settings.start_offset
+    cloth.point_cache.frame_end = scene_settings.end + object_settings.end_offset
 
 
 def object_settings_update(self: 'PhysicSetting', context: bpy.types.Context):

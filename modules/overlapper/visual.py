@@ -5,7 +5,7 @@ from .transform import ZTransforms
 import bpy
 
 
-class ZVisualShader:
+class OvVisualShader:
     batch: gpu.types.GPUBatch = None
     shader: gpu.types.GPUShader = None
     _points: list[Vector]
@@ -24,12 +24,12 @@ class ZVisualShader:
         self.shader = gpu.shader.from_builtin('SMOOTH_COLOR')
         self.batch = batch_for_shader(self.shader, 'LINES', {"pos": self.points, 'color': self._colors})
 
-    def draw(self, obj: 'ZVisualObject'):
+    def draw(self, obj: 'OvVisualObject'):
         matrix = bpy.context.region_data.perspective_matrix
 
         matrix = matrix @ obj.transforms.matrix_world
 
-        self.shader.uniform_float("ModelViewProjectionMatrix", matrix)
+        self.shader.uniform_float("ModelViewProjectionMatrix", matrix @ Matrix.Scale(obj.scale, 4))
         # self.shader.uniform_float("viewportSize", gpu.state.viewport_get()[2:])
         # self.shader.uniform_float("lineWidth", 4.5)
         # self.shader.uniform_float("color", (1, 1, 0, 1))
@@ -40,22 +40,23 @@ class ZVisualShader:
         return self._points
 
 
-class ZVisualObject:
+class OvVisualObject:
     transforms: ZTransforms
-    shader: ZVisualShader
+    scale: float = 1
+    shader: OvVisualShader
 
-    def __init__(self, shader: ZVisualShader):
+    def __init__(self, shader: OvVisualShader):
         self.transforms = ZTransforms()
         self.shader = shader
 
 
-class ZVisualizer:
-    _objects: dict[str, ZVisualObject]
-    _xyz_shader: ZVisualShader
+class OvVisualizer:
+    _objects: dict[str, OvVisualObject]
+    _xyz_shader: OvVisualShader
     handler = None
 
     def __init__(self):
-        self._xyz_shader = ZVisualShader()
+        self._xyz_shader = OvVisualShader()
         self._xyz_shader.add_point(0, 0, 0, color=Vector((1, 0, 0)))
         self._xyz_shader.add_point(1, 0, 0, color=Vector((1, 0, 0)))
 
@@ -77,7 +78,7 @@ class ZVisualizer:
         if obj is not None:
             return obj
 
-        obj = ZVisualObject(self._xyz_shader)
+        obj = OvVisualObject(self._xyz_shader)
         self._objects[name] = obj
         return obj
 
@@ -92,4 +93,5 @@ class ZVisualizer:
         self.handler = bpy.types.SpaceView3D.draw_handler_add(self.draw, (), 'WINDOW', 'POST_VIEW')
 
     def unregister(self):
+        self.clear()
         bpy.types.SpaceView3D.draw_handler_remove(self.handler, 'WINDOW')

@@ -43,8 +43,8 @@ def add_nla(context: bpy.types.Context, strip: bpy.types.NlaStrip) -> LoopInfo:
     item.action = strip.action
     item.obj = strip.id_data
 
-    item.start = int(strip.action_frame_start)
-    item.end = int(strip.action_frame_end)
+    item.start_offset = int(strip.action_frame_start)
+    item.end_offset = int(strip.action_frame_end)
     return item
 
 
