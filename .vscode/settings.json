@@ -1,6 +1,6 @@
 {
     "python.analysis.include": [
-        // "C:\\blender_autocomplete\\4.3",
+        "C:\\blender_autocomplete\\4.3",
         "D:\\Addons\\zenu\\zenu\\modules",
     ],
     "python.analysis.extraPaths": [
@@ -20,8 +20,10 @@
         "reportInvalidTypeArguments": "warning",
     },
     "cSpell.words": [
+        "bbone",
         "mathutils",
         "overlapper",
+        "tweaker",
         "unreg",
         "ZENU"
     ],

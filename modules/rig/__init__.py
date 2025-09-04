@@ -69,7 +69,7 @@ class ZENU_OT_back_to_rig(bpy.types.Operator):
             return False
 
     def execute(self, context: bpy.types.Context):
-        select_armature(context, context.active_object.data.zenu_meta_settings.rotation)
+        select_armature(context, context.active_object.data.zenu_meta_settings.target)
         return {'FINISHED'}
 
 
@@ -103,7 +103,7 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
     def prepare_new_armature(self, context: bpy.types.Context):
         bpy.ops.object.mode_set(mode='POSE')
         original_obj = context.active_object
-        new_obj: bpy.types.Object = context.active_object.data.zenu_meta_settings.rotation
+        new_obj: bpy.types.Object = context.active_object.data.zenu_meta_settings.target
 
         for i in new_obj.data.zenu_meta_deps:
             try:
@@ -116,7 +116,7 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
         name = original_obj.data.name
         new_data = original_obj.data.copy()
         new_data.zenu_meta_settings.is_can_generated = False
-        new_data.zenu_meta_settings.rotation = original_obj
+        new_data.zenu_meta_settings.target = original_obj
 
         for module in rig_modules:
             module.regenerate(context, original_obj, new_obj)

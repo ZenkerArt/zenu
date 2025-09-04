@@ -1,11 +1,6 @@
-import math
-from math import sin, pi
-
 import bpy
-from bpy.app.handlers import persistent
 from .curve_control import CurveControl
 from .curve_generator import CurveGenerator
-from .point_control import PointControl
 from ..rig_module import RigModule
 from ...meta_bone import MetaBoneData
 
@@ -56,12 +51,12 @@ class SplineIKRig(RigModule):
 
     def apply_spline_ik(self, chain_length: int, spline: bpy.types.Object):
         spline_constraint: bpy.types.SplineIKConstraint = None
-        for i in self.bone.pose_bone._constraints:
+        for i in self.bone.pose_bone.constraints:
             if i.type == 'SPLINE_IK':
                 spline_constraint = i
 
         if spline_constraint is None:
-            spline_constraint = self.bone.pose_bone._constraints.new('SPLINE_IK')
+            spline_constraint = self.bone.pose_bone.constraints.new('SPLINE_IK')
 
         spline_constraint.target = spline
         spline_constraint.chain_count = chain_length + 1

@@ -172,7 +172,7 @@ class TentacleRig(RigModule):
         for armature in self.armature_connects:
             tweaker = arm_obj.pose.bones[armature.tweaker]
 
-            constraint: bpy.types.ArmatureConstraint = tweaker._constraints.new(type='ARMATURE')
+            constraint: bpy.types.ArmatureConstraint = tweaker.constraints.new(type='ARMATURE')
 
             for bone in armature.bones:
                 target = constraint.targets.new()
@@ -184,7 +184,7 @@ class TentacleRig(RigModule):
             bone_end = arm_obj.pose.bones[tweaker.end]
             bone_tweaker = arm_obj.pose.bones[tweaker.tweaker]
 
-            constraint_start: bpy.types.StretchToConstraint = bone_start._constraints.new(type='STRETCH_TO')
+            constraint_start: bpy.types.StretchToConstraint = bone_start.constraints.new(type='STRETCH_TO')
             constraint_start.target = arm_obj
             constraint_start.subtarget = bone_tweaker.name
 
@@ -204,6 +204,6 @@ class TentacleRig(RigModule):
             bone_start = arm_obj.pose.bones[bbone[0]]
             bone_tweaker = arm_obj.pose.bones[bbone[1]]
 
-            constraint_start: bpy.types.StretchToConstraint = bone_start._constraints.new(type='STRETCH_TO')
+            constraint_start: bpy.types.StretchToConstraint = bone_start.constraints.new(type='STRETCH_TO')
             constraint_start.target = arm_obj
             constraint_start.subtarget = bone_tweaker.name

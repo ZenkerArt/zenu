@@ -21,6 +21,10 @@ class OvBone:
         return self.arm.matrix_world @ self.bone.matrix
 
     @property
+    def matrix(self):
+        return self.bone.matrix
+    
+    @property
     def matrix_basis(self) -> Matrix:
         return self.bone.matrix_basis.copy()
     

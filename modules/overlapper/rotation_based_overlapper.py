@@ -21,6 +21,7 @@ class RotationBasedOverlapperData:
     rotation_velocity: Quaternion = field(default_factory=Quaternion)
     angular_velocity: Vector = field(default_factory=Vector)
     offset: Matrix = field(default_factory=Matrix)
+    rot_offset: Matrix = field(default_factory=Matrix)
 
 
 class RotationBasedOverlapper:
@@ -35,7 +36,7 @@ class RotationBasedOverlapper:
         self._angular_solver.settings.stiffness = settings.stiffness
         self._settings = settings
 
-    def calculate_motion(self, settings: 'OverlapperSettings', bone: BoneRecord, first_bone: BoneRecord, frame: int):
+    def calculate_motion(self, settings: 'OverlapperSettings', frame: int, bone: BoneRecord, first_bone: BoneRecord):
         try:
             motion_bone = bone
 
@@ -63,6 +64,7 @@ class RotationBasedOverlapper:
 
     def calc(self):
         baker = self._baker
+        # add_empty()
 
         ov_data: dict[str, RotationBasedOverlapperData] = defaultdict(
             RotationBasedOverlapperData)
@@ -72,17 +74,23 @@ class RotationBasedOverlapper:
         first_bone = bones[0][1]
 
         for name, bone in bones:
+            self.bone_rest_matrix(bone)
+
             if bone.parent is None:
                 continue
 
-            ov_data[name].offset = (bone.parent.get_frame(start_frame).matrix_world.inverted() @
-                                    bone.get_frame(start_frame).matrix_world)
+            loc, rot, _ = bone.parent.get_frame(
+                start_frame).matrix_world.decompose()
+            mat1 = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
+
+            loc, rot, _ = bone.get_frame(start_frame).matrix_world.decompose()
+            mat2 = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
+
+            ov_data[name].offset = (mat1.inverted() @ mat2)
 
         for name, bone in bones:
             ov_data[name].rotation_velocity = bone.get_frame(baker.start_offset)\
                 .matrix_world.to_quaternion()
-
-            self.bone_rest_matrix(bone)
 
             for frame in self._baker.get_range_offset():
                 if bone.parent is None:
@@ -92,10 +100,14 @@ class RotationBasedOverlapper:
                 transform_parent = bone.parent.get_frame(frame)
                 transform = bone.get_frame(frame)
 
-                mat: Matrix = transform_parent.matrix_result @ data.offset
-
                 motion = self.calculate_motion(
-                    settings, bone, first_bone, frame)
+                    settings,
+                    frame,
+                    bone,
+                    first_bone
+                )
+
+                mat: Matrix = transform_parent.matrix_result @ data.offset
 
                 base_vec: Vector = mat.col[1].to_3d().normalized()
 
@@ -113,7 +125,9 @@ class RotationBasedOverlapper:
                 data.angular_velocity += Vector(wind.to_euler())
 
                 target_rotation = mat\
-                    .to_quaternion() @ bone.child.get_frame(frame).matrix_basis.to_quaternion()
+                    .to_quaternion() @\
+                    (bone.child.get_frame(frame).matrix_basis.to_quaternion().conjugated() 
+                     @ bone.child.get_frame(start_frame).matrix_basis.to_quaternion())
 
                 data.rotation_velocity, data.angular_velocity = self._angular_solver.solve(
                     data.rotation_velocity,

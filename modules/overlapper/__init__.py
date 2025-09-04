@@ -1,25 +1,9 @@
 import bpy
 from bpy.app.handlers import persistent
+from .context import ov_context
 from .rotation_based_overlapper import RotationBasedOverlapper
 from .overlapper_settings import OverlapperSettings
-from .particle_system import ParticleSystem
-from mathutils import Matrix, Vector
-from .angular_solver import ZAngularSolver
-from .transform_baker import TransformBaker
-from .visual import OvVisualizer
 from ...base_panel import BasePanel
-
-
-def add_empty(name: str):
-    empty = bpy.data.objects.get(name)
-
-    if empty:
-        return empty
-
-    empty = bpy.data.objects.new(name, None)
-    bpy.context.view_layer.layer_collection.collection.objects.link(empty)
-
-    return empty
 
 
 def find_bone_chain(bone: bpy.types.PoseBone, bones: list[bpy.types.PoseBone] = None):
@@ -41,68 +25,6 @@ def find_bone_chain(bone: bpy.types.PoseBone, bones: list[bpy.types.PoseBone] = 
         return find_bone_chain(bone.child, bones)
 
     return bones
-
-
-class ConstraintCreator:
-    _baker: TransformBaker
-    CONST_NAME = '[Zenu] Overlapper'
-
-    def __init__(self, baker: TransformBaker):
-        self._baker = baker
-
-    def create_constraints(self):
-        baker = self._baker
-
-        for _, bone_rec in baker.get_bone_records():
-            empty = add_empty(
-                f'{bone_rec.raw.armature_name}_{bone_rec.raw.bone_name}'
-            )
-            length = bone_rec.raw.bone.length
-            empty.scale = Vector((length, length, length))
-
-            bone_rec.raw.damped_track_to(self.CONST_NAME, empty)
-
-            for frame in baker.get_range():
-                empty.matrix_world = bone_rec\
-                    .get_frame(frame)\
-                    .matrix_result @ Matrix.Scale(length, 4)
-                empty.keyframe_insert(data_path='location', frame=frame)
-                empty.keyframe_insert(data_path='rotation_euler', frame=frame)
-
-    def remove_constraints(self):
-        for bone in bpy.context.selected_pose_bones:
-            empty = bpy.data.objects.get(
-                f'{bpy.context.active_object.name}_{bone.name}'
-            )
-            const: bpy.types.DampedTrackConstraint = bone.constraints.get(
-                self.CONST_NAME)
-
-            if empty is not None:
-                bpy.data.objects.remove(empty)
-
-            if const is not None:
-                bone.constraints.remove(const)
-
-
-class OvContext:
-    visual: OvVisualizer
-    baker: TransformBaker
-    angular_solver: ZAngularSolver
-    ps: ParticleSystem
-
-    def __init__(self):
-        self.visual = OvVisualizer()
-        self.baker = TransformBaker()
-        self.constraints = ConstraintCreator(self.baker)
-        self.angular_solver = ZAngularSolver()
-        self.ps = ParticleSystem()
-
-    @property
-    def settings(self) -> 'OverlapperSettings':
-        return bpy.context.scene.ov_settings
-
-
-ov_context = OvContext()
 
 
 class ZENU_OT_overlapper(bpy.types.Operator):
@@ -135,8 +57,9 @@ class ZENU_OT_bake_transforms(bpy.types.Operator):
                 bone.ov_settings.index = index
 
             tmp = ov_context.baker.add_bone(
-                context.active_object, bone, parent)
-
+                context.active_object, bone, parent
+            )
+            tmp.index = index
             if parent is not None:
                 parent.child = tmp
 
@@ -167,6 +90,7 @@ class ZENU_OT_overlapper_constraint(bpy.types.Operator):
     action: bpy.props.EnumProperty(items=(
         ('ADD', 'Add', ''),
         ('REMOVE', 'Remove', ''),
+        ('BAKE_ACTION', 'Bake Action', ''),
     ))
 
     def execute(self, context: bpy.types.Context):
@@ -174,6 +98,32 @@ class ZENU_OT_overlapper_constraint(bpy.types.Operator):
             ov_context.constraints.create_constraints()
         elif self.action == 'REMOVE':
             ov_context.constraints.remove_constraints()
+        elif self.action == 'BAKE_ACTION':
+            name = context.active_object.name
+            
+            prev_action = context.active_object.animation_data.action
+            action_name = f'{name}_overlapper'
+            
+            action = bpy.data.actions.get(action_name)
+            
+            if action is None:
+                action = prev_action.copy()
+                action.name = action_name
+                
+                # action.
+                # action = bpy.data.actions.new(action_name)
+            
+            context.active_object.animation_data.action_blend_type = 'COMBINE'
+            context.active_object.animation_data.action = action
+            bpy.ops.nla.bake(frame_start=ov_context.baker.start,
+                             frame_end=ov_context.baker.end,
+                             visual_keying=True,
+                             clear_constraints=True,
+                             use_current_action=True,
+                             bake_types={'POSE'})
+            context.active_object.animation_data.action = prev_action
+            # ov_context.baker.start_offset
+            # context.selected_pose_bones
         return {'FINISHED'}
 
 
@@ -197,6 +147,10 @@ class ZENU_PT_overlapper(BasePanel):
         op = col.operator(ZENU_OT_overlapper_constraint.bl_idname,
                           text='Remove Constraints')
         op.action = 'REMOVE'
+
+        op = col.operator(ZENU_OT_overlapper_constraint.bl_idname,
+                          text='Bake Action')
+        op.action = 'BAKE_ACTION'
 
         col = layout.column(align=True)
         col.scale_y = 1.5
@@ -229,19 +183,6 @@ def loop(dummy):
 
     if not ov_context.baker.is_bake:
         return
-
-    # frame = bpy.context.scene.frame_current
-    # v = ov_context.baker.get_iter()[0][1]
-    # first_bone = v.get_frame(frame)
-
-    # for name, value in ov_context.baker.get_iter():
-    #     bone = value.get_frame(frame)
-
-    #     # bone.matrix_result = bone.matrix_world
-
-    #     point_result = ov_context.visual.get_xyz_point(name)
-    #     point_result.scale = value.bone.bone.length
-    #     point_result.transforms.local.matrix = bone.matrix_result
 
 
 reg, unreg = bpy.utils.register_classes_factory((

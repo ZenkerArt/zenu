@@ -1,7 +1,8 @@
 from dataclasses import field, dataclass
 from typing import Optional
 
-from mathutils import Matrix
+from mathutils import Matrix, Vector
+from .utils import add_empty
 from .bone import OvBone
 import bpy
 
@@ -10,6 +11,7 @@ import bpy
 class TransformFrame:
     matrix_world: Matrix
     matrix_basis: Matrix
+    matrix_offset: Matrix
 
     matrix_result: Matrix = field(default_factory=Matrix)
     matrix_vel: Matrix = field(default_factory=Matrix)
@@ -18,6 +20,7 @@ class TransformFrame:
 class BoneRecord:
     _frames: dict[int, TransformFrame]
     _bone: OvBone
+    index: int = -1
     parent: Optional['BoneRecord'] = None
     child: Optional['BoneRecord'] = None
 
@@ -85,6 +88,7 @@ class TransformBaker:
     def clear(self):
         self._records.clear()
         self._is_bake = False
+    
 
     def bake(self, start: int, end: int, offset: int = 0):
         self._start = start
@@ -96,10 +100,18 @@ class TransformBaker:
             bpy.context.scene.frame_set(frame)
 
             for i in self._records.values():
-                mat = Matrix.Translation(i.raw.bone.vector) @ i.raw.matrix_world
+                _, rot, scale = i.raw.matrix.decompose()
+                mat = Matrix.LocRotScale(Vector(), rot, scale)
+                
+                offset = Matrix.Translation(Vector((0, i.raw.bone.length, 0)))
+                
+                
+                mat = i.raw.matrix_world @ offset
+                
                 i.add_frame(frame, TransformFrame(
                     matrix_world=mat,
                     matrix_basis=i.raw.matrix_basis,
+                    matrix_offset=offset,
                     matrix_result=mat
                 ))
         self._is_bake = True
@@ -112,3 +124,47 @@ class TransformBaker:
 
     def get_range(self):
         return range(self._start, self._end)
+    
+    def get_length(self):
+        return self.start - self.end
+
+
+class ConstraintCreator:
+    _baker: TransformBaker
+    CONST_NAME = '[Zenu] Overlapper'
+
+    def __init__(self, baker: TransformBaker):
+        self._baker = baker
+
+    def create_constraints(self):
+        baker = self._baker
+
+        for _, bone_rec in baker.get_bone_records():
+            empty = add_empty(
+                f'{bone_rec.raw.armature_name}_{bone_rec.raw.bone_name}'
+            )
+            length = bone_rec.raw.bone.length
+            empty.scale = Vector((length, length, length))
+
+            bone_rec.raw.damped_track_to(self.CONST_NAME, empty)
+
+            for frame in baker.get_range():
+                empty.matrix_world = bone_rec\
+                    .get_frame(frame)\
+                    .matrix_result @ Matrix.Scale(length, 4)
+                empty.keyframe_insert(data_path='location', frame=frame)
+                empty.keyframe_insert(data_path='rotation_euler', frame=frame)
+
+    def remove_constraints(self):
+        for bone in bpy.context.selected_pose_bones:
+            empty = bpy.data.objects.get(
+                f'{bpy.context.active_object.name}_{bone.name}'
+            )
+            const: bpy.types.DampedTrackConstraint = bone.constraints.get(
+                self.CONST_NAME)
+
+            if empty is not None:
+                bpy.data.objects.remove(empty)
+
+            if const is not None:
+                bone.constraints.remove(const)

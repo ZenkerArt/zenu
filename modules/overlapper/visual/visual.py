@@ -1,6 +1,6 @@
 import gpu
 from gpu_extras.batch import batch_for_shader
-from mathutils import Vector, Quaternion, Matrix
+from mathutils import Vector, Matrix
 from .transform import ZTransforms
 import bpy
 

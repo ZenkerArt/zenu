@@ -4,12 +4,6 @@ from mathutils import Matrix, Quaternion, Vector
 import bpy
 
 
-def matrix_decompose(matrix: Matrix):
-    loc, rot, scale = matrix.decompose()
-
-    return Matrix.Translation(loc), rot.to_matrix().to_4x4(), Matrix.Diagonal(scale.to_4d())
-
-
 class ZTransform:
     matrix: Matrix
 
@@ -22,7 +16,7 @@ class ZTransform:
 
     @location.setter
     def location(self, value: Vector):
-        loc, rot, scale = self.matrix.decompose()
+        _, rot, scale = self.matrix.decompose()
 
         self.matrix = Matrix.LocRotScale(value, rot, scale)
 
@@ -32,7 +26,7 @@ class ZTransform:
 
     @rotation.setter
     def rotation(self, value: Quaternion):
-        loc, rot, scale = self.matrix.decompose()
+        loc, _, scale = self.matrix.decompose()
 
         self.matrix = Matrix.LocRotScale(loc, value, scale)
 
@@ -42,7 +36,7 @@ class ZTransform:
 
     @scale.setter
     def scale(self, value: Vector):
-        loc, rot, scale = self.matrix.decompose()
+        loc, rot, _ = self.matrix.decompose()
 
         self.matrix = Matrix.LocRotScale(loc, rot, value)
 
