@@ -1,4 +1,5 @@
 from dataclasses import field, dataclass
+import math
 from typing import Optional
 
 from mathutils import Matrix, Vector
@@ -20,6 +21,7 @@ class TransformFrame:
 class BoneRecord:
     _frames: dict[int, TransformFrame]
     _bone: OvBone
+    _baker: 'TransformBaker'
     index: int = -1
     parent: Optional['BoneRecord'] = None
     child: Optional['BoneRecord'] = None
@@ -37,7 +39,25 @@ class BoneRecord:
         self._frames[frame] = transform
 
     def get_frame(self, frame: int) -> TransformFrame:
+        
+        if frame <= self._baker.start:
+            frame = self._baker.start
+        
+        if frame >= self._baker.end:
+            frame = self._baker.end
+        
         return self._frames[frame]
+
+    def get_interpolated(self, frame: float):
+        floor_frame = math.floor(frame)
+        ceil_frame = math.ceil(frame)
+
+        relative_time = frame - floor_frame
+
+        f1 = self.get_frame(floor_frame)
+        f2 = self.get_frame(ceil_frame)
+
+        return f1.matrix_world.lerp(f2.matrix_world, relative_time), f1.matrix_offset.lerp(f2.matrix_result, relative_time)
 
 
 class TransformBaker:
@@ -80,6 +100,7 @@ class TransformBaker:
     def add_bone(self, arm: bpy.types.Object, bone: bpy.types.PoseBone, parent: BoneRecord):
         bone_rec = BoneRecord(arm.name, bone.name, parent)
         self.add_record(bone.name, bone_rec)
+        bone_rec._baker = self
         return bone_rec
 
     def get_by_name(self, name: str, frame: int):
@@ -88,7 +109,6 @@ class TransformBaker:
     def clear(self):
         self._records.clear()
         self._is_bake = False
-    
 
     def bake(self, start: int, end: int, offset: int = 0):
         self._start = start
@@ -102,12 +122,11 @@ class TransformBaker:
             for i in self._records.values():
                 _, rot, scale = i.raw.matrix.decompose()
                 mat = Matrix.LocRotScale(Vector(), rot, scale)
-                
+
                 offset = Matrix.Translation(Vector((0, i.raw.bone.length, 0)))
-                
-                
+
                 mat = i.raw.matrix_world @ offset
-                
+
                 i.add_frame(frame, TransformFrame(
                     matrix_world=mat,
                     matrix_basis=i.raw.matrix_basis,
@@ -124,7 +143,7 @@ class TransformBaker:
 
     def get_range(self):
         return range(self._start, self._end)
-    
+
     def get_length(self):
         return self.start - self.end
 
@@ -138,8 +157,11 @@ class ConstraintCreator:
 
     def create_constraints(self):
         baker = self._baker
+        bb = baker.get_bone_records()
 
-        for _, bone_rec in baker.get_bone_records():
+        for i in range(len(bb)):
+            _, bone_rec = bb[i]
+            
             empty = add_empty(
                 f'{bone_rec.raw.armature_name}_{bone_rec.raw.bone_name}'
             )

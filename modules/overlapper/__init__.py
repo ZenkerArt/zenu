@@ -1,7 +1,11 @@
+from collections import defaultdict
 import bpy
 from bpy.app.handlers import persistent
+from mathutils import Matrix, Vector, Quaternion
+from .transform_baker import add_empty
+from .verlet_physic import VerletPhysic
 from .context import ov_context
-from .rotation_based_overlapper import RotationBasedOverlapper
+from .rotation_based_overlapper import RotationBasedOverlapper, RotationBasedOverlapperData
 from .overlapper_settings import OverlapperSettings
 from ...base_panel import BasePanel
 
@@ -32,9 +36,65 @@ class ZENU_OT_overlapper(bpy.types.Operator):
     bl_idname = 'zenu.overlapper'
 
     def execute(self, context: bpy.types.Context):
-        r = RotationBasedOverlapper(ov_context.baker, ov_context.settings)
-        r.calc()
-        ov_context.constraints.create_constraints()
+        # r = RotationBasedOverlapper(ov_context.baker, ov_context.settings)
+        # r.calc()
+        # ov_context.constraints.create_constraints()
+        baker = ov_context.baker
+        ov_data: dict[str, RotationBasedOverlapperData] = defaultdict(
+            RotationBasedOverlapperData)
+        bones = baker.get_bone_records()
+        start_frame = baker.start_offset
+        first_bone = bones[0][1]
+
+        for name, bone in bones:
+            # self.bone_rest_matrix(bone)
+
+            if bone.parent is None:
+                continue
+
+            loc, rot, _ = bone.parent.get_frame(
+                start_frame).matrix_world.decompose()
+            mat1 = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
+
+            loc, rot, _ = bone.get_frame(start_frame).matrix_world.decompose()
+            mat2 = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
+
+            ov_data[name].offset = (mat1.inverted() @ mat2)
+
+        for frame in ov_context.baker.get_range_offset():
+            for name, br in ov_context.baker.get_bone_records():
+                transform = br.get_frame(frame)
+                transform.matrix_vel = transform.matrix_result
+
+        for name, br in ov_context.baker.get_bone_records():
+            for frame in ov_context.baker.get_range_offset():
+                transform_parent = br.parent.get_frame(frame)
+                transform = br.get_frame(frame)
+                transform_shift = br.get_frame(frame - 3)
+
+                old_pos = (transform_shift.matrix_result @
+                           transform_shift.matrix_offset).translation
+
+                new_pos = (transform_parent.matrix_result @
+                           ov_data[name].offset).translation
+
+                vec = (old_pos - new_pos).normalized()
+                quat = vec.to_track_quat('Y', 'Z')
+                
+                current_forward = Vector((0, 1, 0))
+                current_forward.rotate(transform.matrix_result.to_quaternion())
+                
+                rot_quat = transform.matrix_result.to_quaternion() @ current_forward.rotation_difference(vec)
+
+                transform.matrix_result = transform_parent.matrix_result @ ov_data[name].offset
+                transform.matrix_vel = Matrix.LocRotScale(
+                    transform.matrix_result.translation, rot_quat, Vector((1, 1, 1)))
+
+            for frame in ov_context.baker.get_range_offset():
+                for name, br in ov_context.baker.get_bone_records():
+                    transform = br.get_frame(frame)
+                    transform.matrix_result = transform.matrix_vel.copy()
+
         return {'FINISHED'}
 
 
@@ -100,19 +160,19 @@ class ZENU_OT_overlapper_constraint(bpy.types.Operator):
             ov_context.constraints.remove_constraints()
         elif self.action == 'BAKE_ACTION':
             name = context.active_object.name
-            
+
             prev_action = context.active_object.animation_data.action
             action_name = f'{name}_overlapper'
-            
+
             action = bpy.data.actions.get(action_name)
-            
+
             if action is None:
                 action = prev_action.copy()
                 action.name = action_name
-                
+
                 # action.
                 # action = bpy.data.actions.new(action_name)
-            
+
             context.active_object.animation_data.action_blend_type = 'COMBINE'
             context.active_object.animation_data.action = action
             bpy.ops.nla.bake(frame_start=ov_context.baker.start,
@@ -122,8 +182,6 @@ class ZENU_OT_overlapper_constraint(bpy.types.Operator):
                              use_current_action=True,
                              bake_types={'POSE'})
             context.active_object.animation_data.action = prev_action
-            # ov_context.baker.start_offset
-            # context.selected_pose_bones
         return {'FINISHED'}
 
 
@@ -180,9 +238,33 @@ class OverlapperBone(bpy.types.PropertyGroup):
 
 @persistent
 def loop(dummy):
+    pass
+    # ov_context.verlet_physic.update()
 
-    if not ov_context.baker.is_bake:
-        return
+    # ov_context.verlet_physic.objects[0].location = add_empty('Test').location.copy()
+
+    # objs = ov_context.verlet_physic.objects
+    # for i in range(len(objs)):
+    #     objs[i].mat = add_empty('Test').matrix_world.copy()
+    #     point = ov_context.visual.get_xyz_point(f'Point {i}')
+    #     point.transforms.local.location = objs[i].location
+    #     point.transforms.local.rotation = objs[i].rot
+
+    # if not ov_context.baker.is_bake:
+    #     return
+
+    # frame = bpy.context.scene.frame_current
+    # for name, br in ov_context.baker.get_bone_records():
+    #     transform = br.get_frame(frame)
+
+    #     point = ov_context.visual.get_xyz_point(f'Point {name}')
+    #     point.transforms.local.matrix = transform.matrix_result
+    #     point.scale = br.raw.bone.length
+
+    #     point = ov_context.visual.get_xyz_point(f'Point {name} 1')
+    #     point.transforms.local.matrix = transform.matrix_vel
+    #     point.scale = br.raw.bone.length
+    # for frame in ov_context.baker.get_range_offset():
 
 
 reg, unreg = bpy.utils.register_classes_factory((

@@ -34,4 +34,6 @@
     "python.analysis.typeCheckingMode": "off",
     // "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
     "python.useEnvironmentsExtension": true,
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
 }
