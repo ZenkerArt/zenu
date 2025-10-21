@@ -134,7 +134,8 @@ class ZENU_OT_copy_nla_strip_settings(bpy.types.Operator):
                     continue
 
                 copy_curve.keyframe_points.clear()
-                copy_curve.keyframe_points.add(len(active_curve.keyframe_points))
+                copy_curve.keyframe_points.add(
+                    len(active_curve.keyframe_points))
 
                 for index, key_active in enumerate(active_curve.keyframe_points):
                     k = copy_curve.keyframe_points[index]
@@ -187,8 +188,15 @@ class ZENU_OT_copy_nla_strip_settings(bpy.types.Operator):
                 strip.use_sync_length = active_strip.use_sync_length
                 strip.use_animated_time = active_strip.use_animated_time
                 strip.use_animated_influence = active_strip.use_animated_influence
+                strip.use_animated_time_cyclic = active_strip.use_animated_time_cyclic
+                strip.use_reverse = active_strip.use_reverse
+                strip.use_auto_blend = active_strip.use_auto_blend
                 strip.repeat = active_strip.repeat
                 strip.scale = active_strip.scale
+                strip.blend_in = active_strip.blend_in
+                strip.blend_out = active_strip.blend_out
+                # strip.action_frame_start = active_strip.action_frame_start
+                # strip.action_frame_end = active_strip.action_frame_end
 
                 self.copy(strip, active_strip, 'strip_time')
                 self.copy(strip, active_strip, 'influence')
@@ -248,7 +256,7 @@ class ZENU_OT_action_selector_item_operations(bpy.types.Operator):
 
     def isolate(self, result: set[ActionSearchResult]):
         self.unhide(result)
-
+        isolate = self.active_action.isolate
         for r in result:
             strips: list[bpy.types.NlaStrip] = []
 
@@ -256,13 +264,17 @@ class ZENU_OT_action_selector_item_operations(bpy.types.Operator):
                 for strip in track.strips:
                     strips.append(strip)
 
-            if r.obj.zenu_is_isolate:
+            if self.active_action.isolate:
                 bpy.context.scene.use_preview_range = False
-                r.obj.zenu_is_isolate = False
-                r.obj.animation_data.action = r.obj['zenu_isolate_changes']['action']
+                isolate = False
+                changes = r.obj.get('zenu_isolate_changes')
+
+                if changes is None:
+                    continue
+
+                r.obj.animation_data.action = changes['action']
                 for strip in strips:
-                    val = r.obj['zenu_isolate_changes']['changes'].get(
-                        strip.name)
+                    val = changes['changes'].get(strip.name)
 
                     if val is None:
                         continue
@@ -281,14 +293,15 @@ class ZENU_OT_action_selector_item_operations(bpy.types.Operator):
                 'action': r.obj.animation_data.action
             }
             r.obj.animation_data.action = self.active_action.action
-            r.obj.zenu_is_isolate = True
-            
+            isolate = True
+
             if self.active_action.start == self.active_action.end:
                 continue
-            
+
             bpy.context.scene.frame_preview_end = self.active_action.end
             bpy.context.scene.frame_preview_start = self.active_action.start
             bpy.context.scene.use_preview_range = True
+        self.active_action.isolate = isolate
 
     def execute(self, context: bpy.types.Context):
         item: AC_Action = None
@@ -307,7 +320,6 @@ class ZENU_OT_action_selector_item_operations(bpy.types.Operator):
         self.active_action = item
 
         result = find_all_object_with_action_name(item.action.name)
-        
 
         if self.action == 'SELECT':
             self.select(result)
@@ -355,7 +367,7 @@ class ZENU_PT_action_selector(BasePanel):
         row = col.row(align=True)
         row.prop(action_active, 'start', text='')
         row.prop(action_active, 'end', text='')
-        
+
         main_col = layout.column(align=True)
 
         row = main_col.row(align=True)
@@ -367,16 +379,8 @@ class ZENU_PT_action_selector(BasePanel):
         self.draw_set_op(row, name='Rename', icon='GREASEPENCIL',
                          action='RENAME_TO_ACTION_NAME')
 
-        is_isolate = False
-
-        try:
-            obj = context.selected_objects[0]
-            is_isolate = obj.zenu_is_isolate
-        except IndexError:
-            pass
-
         self.draw_set_op(row, name='Isolate',
-                         icon='OBJECT_HIDDEN', action='ISOLATE', active=is_isolate)
+                         icon='OBJECT_HIDDEN', action='ISOLATE', active=action_active.isolate)
 
         op = main_col.operator(ZENU_OT_copy_nla_strip_settings.bl_idname)
         op.action_name = action_active.action.name

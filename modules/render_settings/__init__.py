@@ -1,6 +1,7 @@
 import bpy
 from ...base_panel import BasePanel
 from ...utils import update_window
+from ..events import es
 
 resolutions_2d = [
     (1280, 720, 'HD'),
@@ -42,6 +43,7 @@ def setup():
 
 def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
     setup()
+    es.emit('change_vr')
     scene = context.scene
 
     scene.render.image_settings.views_format = 'STEREO_3D'
@@ -65,6 +67,7 @@ def setup_vr(context: bpy.types.Context, camera_obj: bpy.types.Object):
 
 def setup_2d(context: bpy.types.Context, camera_obj: bpy.types.Object):
     setup()
+    es.emit('change_2d')
     scene = context.scene
     scene.render.use_multiview = False
 
@@ -135,6 +138,7 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
 
         match settings.render_type:
             case '2D':
+                
                 res = resolutions_2d[len(resolutions_2d) - 1]
 
                 render_settings.width = res[0]
@@ -142,6 +146,7 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
                 setup_2d(context, settings.camera_vr)
                 scene.camera = settings.camera_2d
             case 'VR':
+                es.emit('change_vr')
                 res = resolutions_vr[len(resolutions_vr) - 1]
 
                 render_settings.width = res[0]
