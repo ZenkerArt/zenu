@@ -119,7 +119,6 @@ def get_collection(name: str, color: str = 'COLOR_04'):
 
     collection = bpy.data.collections.new(name)
     collection.color_tag = color
-    collection.is_lod = True
     bpy.context.scene.collection.children.link(collection)
     return collection
 

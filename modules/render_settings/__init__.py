@@ -1,4 +1,7 @@
+import os
+from sys import prefix
 import bpy
+from bpy_extras.io_utils import ExportHelper
 from ...base_panel import BasePanel
 from ...utils import update_window
 from ..events import es
@@ -138,7 +141,7 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
 
         match settings.render_type:
             case '2D':
-                
+
                 res = resolutions_2d[len(resolutions_2d) - 1]
 
                 render_settings.width = res[0]
@@ -263,6 +266,126 @@ class ZENU_OT_save_time(bpy.types.Operator):
             settings.frame_end = context.scene.frame_end
             settings.frame_start = context.scene.frame_start
         return {'FINISHED'}
+
+
+class ZENU_OT_separate_frame(bpy.types.Operator, ExportHelper):
+    bl_label = 'Separate File'
+    bl_idname = 'zenu.separate_file'
+    bl_options = {'UNDO'}
+
+    filename_ext = ".blend"
+
+    divide: bpy.props.IntProperty(name='File Divide', default=2)
+    prefix: bpy.props.StringProperty(name='Prefix', default='Part')
+
+    def align(self, frame: int):
+        scene = bpy.context.scene
+        frame_step = scene.frame_step
+
+        frame_start = scene.frame_start
+        frame_end = scene.frame_end
+
+        for i in range(frame_start, frame_end, frame_step):
+            if i >= frame - frame_step:
+                return i
+
+        raise RuntimeError("Frame not found.")
+
+    def execute(self, context: bpy.types.Context):
+        scene = context.scene
+        frame_start = scene.frame_start
+        frame_end = scene.frame_end
+
+        divide: int = self.divide
+        frame = (frame_end - frame_start) // divide
+
+        frames = []
+
+        for i in range(divide):
+            frames.append(self.align(frame_start + frame * i))
+
+        frames.append(self.align(frame_end))
+
+        filename = bpy.path.basename(self.filepath)
+        filename, ext = os.path.splitext(filename)
+        file_dir = os.path.dirname(self.filepath)
+
+        names = []
+        for index in range(divide):
+            filename_n = f'{filename}_{self.prefix}{index+1}{ext}'
+
+            names.append(filename_n)
+
+        for index, frame_current in enumerate(frames):
+            try:
+                frame_next = frames[index + 1]
+            except IndexError:
+                continue
+
+            # print(frame_current, frame_next)
+            scene.frame_start = frame_current
+            scene.frame_end = frame_next
+            bpy.ops.wm.save_as_mainfile(
+                filepath=os.path.join(file_dir, names[index]))
+
+        return {'FINISHED'}
+
+
+class ZENU_OT_find_last_frame(bpy.types.Operator):
+    bl_label = 'Find Last Frame'
+    bl_idname = 'zenu.find_last_frame'
+    bl_options = {'UNDO'}
+
+    end: bpy.props.BoolProperty()
+    start: bpy.props.BoolProperty()
+
+    def execute(self, context: bpy.types.Context):
+        scene = bpy.context.scene
+        frame_step = scene.frame_step
+
+        frame_start = scene.frame_start
+        frame_end = scene.frame_end
+
+        frame = frame_start
+        frame_e = -1
+
+        frames = [int(os.path.splitext(i.name)[0]) for i in os.scandir(
+            bpy.path.abspath(context.scene.render.filepath))]
+
+        for index, image_frame in enumerate(frames):
+
+            if image_frame < frame_start:
+                continue
+
+            if image_frame > frame:
+
+                if frame + frame_step < image_frame:
+                    break
+
+                frame = image_frame
+                try:
+                    frame_e = frames[index + 1]
+                except IndexError:
+                    pass
+        
+        
+        print(frame, frame_e)
+        if self.start:
+            scene.frame_start = frame
+
+        if self.end:
+            scene.frame_end = frame_e
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        # self.execute(context)
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.row(align=True)
+        col.prop(self, "start", expand=True, icon='ACTION')
+        col.prop(self, "end", expand=True, icon='ACTION')
 
 
 class ZENU_PT_render_settings(BasePanel):
@@ -419,6 +542,9 @@ class ZENU_PT_render_settings(BasePanel):
         row.prop(context.scene, 'frame_start', text='')
         row.prop(context.scene, 'frame_end', text='')
 
+        layout.operator(ZENU_OT_separate_frame.bl_idname)
+        layout.operator(ZENU_OT_find_last_frame.bl_idname)
+
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_setup_render,
@@ -426,6 +552,8 @@ reg, unreg = bpy.utils.register_classes_factory((
     ZENU_OT_set_final_settings,
     ZENU_OT_save_time,
     ZENU_OT_set_preview_settings,
+    ZENU_OT_separate_frame,
+    ZENU_OT_find_last_frame,
     ZENU_PT_render_settings,
     RenderSettings,
     RenderSetupSettings
