@@ -2,7 +2,7 @@ from ....utils import register_modules, unregister_modules
 from . import audio_view, loop_issues, time_ranges
 
 modules = (
-    audio_view,d
+    audio_view,
     loop_issues,
     time_ranges
 )
