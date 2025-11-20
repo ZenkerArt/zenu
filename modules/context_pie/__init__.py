@@ -192,6 +192,10 @@ def register():
     dopesheet.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     graph_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
     sequence_editor.new(ZENU_OT_open_context_pie.bl_idname, type='W')
+    
+    # key_config = bpy.context.window_manager.keyconfigs.addon
+    # key_map = key_config.keymaps.new(name='Context Pie', space_type='VIEW_3D')
+    # key_map.keymap_items.new(ZENU_OT_open_context_pie.bl_idname, 'W', value='PRESS')
 
 
 def unregister():

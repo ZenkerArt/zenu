@@ -121,7 +121,7 @@ class ZenuUIList(Generic[T]):
         self._index = new_index
 
     @property
-    def prop_list(self) -> int:
+    def prop_list(self) -> list[T]:
         return getattr(bpy.context.scene, self._property_list_name)
 
     def remove(self, index: int):

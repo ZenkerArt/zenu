@@ -63,6 +63,7 @@ class Keybindings:
             direction=direction,
             repeat=repeat,
             head=head)
+        
         self._register_bind(keybind)
 
     def remove(self, type: str):
@@ -95,8 +96,10 @@ class Keybindings:
         self._keys.append(keybinding)
 
     def register(self):
+        print(self._space)
         key_config = bpy.context.window_manager.keyconfigs.addon
         self._key_map = key_config.keymaps.new(name=self._name, space_type=self._space)
+        
 
         for i in self._keys_wait_to_register:
             self._register_bind(i)
@@ -119,5 +122,5 @@ key_spaces = (
     view_3d,
     dopesheet,
     graph_editor,
-    sequence_editor
+    sequence_editor,
 )

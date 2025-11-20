@@ -2,7 +2,6 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import Any
 
-import bgl
 import blf
 import bpy
 import gpu
