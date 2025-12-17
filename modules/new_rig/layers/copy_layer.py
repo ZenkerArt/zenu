@@ -26,6 +26,13 @@ class CopyLayer(RigLayer):
         
         bpy.ops.object.mode_set(mode='POSE')
         for i in context.new_armature.pose.bones:
+            org_bone = context.original_armature.pose.bones[i.name]
+            i.custom_shape = org_bone.custom_shape
+            i.custom_shape_translation = org_bone.custom_shape_translation
+            i.custom_shape_scale_xyz = org_bone.custom_shape_scale_xyz
+            i.custom_shape_wire_width = org_bone.custom_shape_wire_width
+            i.custom_shape_transform = org_bone.custom_shape_transform
+            
             for con in i.constraints:
                 i.constraints.remove(con)
 

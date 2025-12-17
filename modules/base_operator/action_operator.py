@@ -30,6 +30,7 @@ class ActionOperator:
     def draw_action(cls, layout: bpy.types.UILayout, method: Any, text: str = '', icon: str = 'NONE'):
         op = layout.operator(cls.bl_idname(), text=text, icon=icon)
         op.action = cls.get_action(method)
+        return op
 
     @classmethod
     def gen_op(cls):

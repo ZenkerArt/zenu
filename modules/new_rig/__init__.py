@@ -9,6 +9,7 @@ import bpy
 
 class RigActions(ActionOperator):
     bl_label = 'Rig Action'
+    mute: bpy.props.BoolProperty(default=True)
 
     @staticmethod
     def switch_arm(obj1, obj2):
@@ -29,6 +30,16 @@ class RigActions(ActionOperator):
 
         if rig_type == 'META' or rig_type == 'GENERATED':
             self.switch_arm(context.active_object, link_rig)
+
+    def action_disable_actions(self, context: bpy.types.Context):
+        obj = context.active_object
+
+        obj.zenu_rig_props.action_muted = not obj.zenu_rig_props.action_muted
+
+        for bone in obj.pose.bones:
+            for constraint in bone.constraints:
+                if isinstance(constraint, bpy.types.ActionConstraint):
+                    constraint.mute = obj.zenu_rig_props.action_muted
 
 
 class ZENU_OT_generate_rig(bpy.types.Operator):
@@ -145,11 +156,11 @@ class ZENU_PT_new_rig(BasePanel):
                  icon='MOD_MIRROR', text='Mirror')
         col.prop_search(rig_action_list.active, 'bone',
                         obj.data, 'bones', text='')
-        
+
         if rig_action_list.active.mirror:
-                col.prop_search(rig_action_list.active, 'mirror_bone',
-                    obj.data, 'bones', text='')
-        
+            col.prop_search(rig_action_list.active, 'mirror_bone',
+                            obj.data, 'bones', text='')
+
         col.prop(rig_action_list.active, 'action', text='')
 
     def draw(self, context: bpy.types.Context):
@@ -162,12 +173,14 @@ class ZENU_PT_new_rig(BasePanel):
 
         if not isinstance(context.active_object.data, bpy.types.Armature):
             return
-
+        obj = context.active_object
+        
         row = layout.row(align=True)
         row.operator(ZENU_OT_generate_rig.bl_idname)
         RigActions.draw_action(row, RigActions.action_back, 'Back')
+        op = RigActions.draw_action(layout.column(), RigActions.action_disable_actions,
+                                    'Enable Actions' if obj.zenu_rig_props.action_muted else 'Disable Actions')
 
-        obj = context.active_object
         col = layout.column(align=True)
         col.prop(obj.zenu_rig_props, 'rig_type',
                  text='', icon='APPEND_BLEND')
@@ -258,6 +271,7 @@ class ZenuRig(bpy.types.PropertyGroup):
         ('GENERATED', 'Generated Rig', '')
     ), name='Rig Type')
     link_rig: bpy.props.PointerProperty(type=bpy.types.Object)
+    action_muted: bpy.props.BoolProperty(default=False)
 
 
 class ZenuRigShape(bpy.types.PropertyGroup):

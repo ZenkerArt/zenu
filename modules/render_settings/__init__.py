@@ -1,3 +1,4 @@
+from email.policy import default
 import os
 from sys import prefix
 import bpy
@@ -122,8 +123,22 @@ class RenderSettings(bpy.types.PropertyGroup):
 class ZENU_OT_set_final_settings(bpy.types.Operator):
     bl_label = 'Set Final'
     bl_idname = 'zenu.set_final_settings'
-
+    
+    filename_ext = ""
+    filepath: bpy.props.StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'}, default='')
+    
+    def invoke(self, context, event):
+        self.filepath = ''
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
     def execute(self, context: bpy.types.Context):
+        file_dir = os.path.dirname(self.filepath)
+        try:
+            file_dir = bpy.path.relpath(file_dir)
+        except Exception:
+            pass
+        
         scene = context.scene
         render = scene.render
         settings: RenderSetupSettings = bpy.context.scene.zenu_render_setup
@@ -134,10 +149,12 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
         scene.frame_step = 2
         render.use_border = False
         scene.cycles.samples = 128
+        
+        bpy.context.scene.render.image_settings.media_type = 'IMAGE'
         render.image_settings.file_format = 'PNG'
         render.image_settings.compression = 15
 
-        render.filepath = render_settings.path
+        render.filepath = file_dir
 
         match settings.render_type:
             case '2D':
@@ -175,10 +192,10 @@ class ZENU_OT_set_preview_settings(bpy.types.Operator):
         render.use_simplify = True
         render.use_persistent_data = True
         scene.frame_step = 2
-        # render.use_border = False
+        render.use_border = False
         scene.cycles.samples = 8
+        bpy.context.scene.render.image_settings.media_type = 'VIDEO'
         render.image_settings.file_format = 'FFMPEG'
-        render_settings.path = render.filepath
         render.filepath = '//Renders/'
 
         render.ffmpeg.format = 'MPEG4'

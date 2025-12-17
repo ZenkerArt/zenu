@@ -39,7 +39,7 @@ class BendyBone(RigComponent):
             bb = bone_create_lerp(bone, factor, prefix=prefix)
             bb.bbone_x = bone.bbone_x * 2
             bb.bbone_z = bone.bbone_z * 2
-            bb.length = bb.length / 10
+            bb.length = bb.length / 5
             bb.use_deform = False
             return bb
 

@@ -1,0 +1,65 @@
+{
+	"Zenu Action Operator": {
+		"prefix": [
+			"zenu_ac",
+			"ac"
+		],
+		"description": "Zenu Action Operator",
+		"scope": "python",
+		"body": [
+			"class ${1:name}(ActionOperator):\r",
+			"    bl_label = '${2:label}'\r",
+			"    \r",
+			"    def action_pure(self, context: bpy.types.Context):\r",
+			"        pass"
+		]
+	},
+	"Zenu Op": {
+		"prefix": [
+			"zenu_op",
+			"op"
+		],
+		"description": "Zenu Op",
+		"scope": "python",
+		"body": [
+			"class ZENU_OT_${1:name}(bpy.types.Operator):",
+			"    bl_label = '${2:label}'",
+			"    bl_idname = 'zenu.${1:name}'",
+			"",
+			"    def execute(self, context: bpy.types.Context):",
+			"        return {'FINISHED'}"
+		]
+	},
+	"Zenu Mod": {
+		"prefix": [
+			"zenu_mod",
+			"mod"
+		],
+		"description": "Zenu Mod",
+		"scope": "python",
+		"body": [
+			"import bpy",
+			"from ...base_panel import BasePanel",
+			"",
+			"",
+			"class ZENU_PT_${name}(BasePanel):",
+			"    bl_label = '${label}'",
+			"    bl_context = ''",
+			"",
+			"    def draw(self, context: bpy.types.Context):",
+			"        layout = self.layout",
+			"",
+			"reg, unreg = bpy.utils.register_classes_factory((",
+			"    ZENU_PT_${name},",
+			"))",
+			"",
+			"def register():",
+			"    reg()",
+			"",
+			"",
+			"def unregister():",
+			"    unreg()",
+			""
+		]
+	}
+}

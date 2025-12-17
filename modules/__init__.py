@@ -1,7 +1,7 @@
 from . import (animation_utils, asset_browser_utils, audio_gen, bone_layers,
                context_pie, context_pie_new, daz_diff_utils, materials,
                mesh_utils, modifier_search, new_rig, render_settings,
-               sequencer_utils, space_switcher, utils_panel, uv_utils, action_selector, camera_selector, new_rig)
+               sequencer_utils, space_switcher, utils_panel, uv_utils, action_selector, camera_selector, new_rig, project_manager)
 
 modules = (
     bone_layers,
@@ -22,4 +22,5 @@ modules = (
     materials,
     mesh_utils,
     daz_diff_utils,
+    project_manager
 )
