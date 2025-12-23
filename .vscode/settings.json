@@ -1,10 +1,10 @@
 {
     "python.analysis.include": [
-        "C:\\blender_autocomplete\\4.3",
+        // "C:\\blender_autocomplete\\4.3",
         "D:\\Addons\\zenu\\zenu\\modules",
     ],
     "python.analysis.extraPaths": [
-        "C:\\blender_autocomplete\\4.3",
+        // "C:\\blender_autocomplete\\4.3",
         "D:\\Addons\\zenu\\zenu\\modules",
     ],
     "python.analysis.diagnosticSeverityOverrides": {
@@ -34,6 +34,6 @@
     "python.analysis.typeCheckingMode": "off",
     // "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
     "python.useEnvironmentsExtension": true,
-    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.defaultEnvManager": "ms-python.python:venv",
     "python-envs.pythonProjects": [],
 }

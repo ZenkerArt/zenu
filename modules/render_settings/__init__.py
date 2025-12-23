@@ -135,7 +135,7 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         file_dir = os.path.dirname(self.filepath)
         try:
-            file_dir = bpy.path.relpath(file_dir)
+            file_dir = os.path.join(bpy.path.relpath(file_dir), '\\')
         except Exception:
             pass
         

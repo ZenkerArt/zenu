@@ -106,11 +106,11 @@ class ZENU_OT_calculate_triggers_realtime(bpy.types.Operator):
             realtime_data.triggered[trigger.name] = trigger.is_triggered
 
     def execute(self, context: bpy.types.Context):
-        s: dict[str, bpy.types.Sequence] = context.scene.sequence_editor.sequences
+        strips = context.scene.sequence_editor.strips
 
-        for key, item in s.items():
-            if item.channel == 3:
-                s.remove(item)
+        for strip in strips:
+            if strip.channel == 3:
+                strips.remove(strip)
 
         realtime_data.is_record = True
         realtime_data.on_frame_update = self.add_audio
@@ -180,10 +180,14 @@ class ZENU_random_audio_import(bpy.types.Operator, ImportHelper):
         # print()
         files: list[str] = [os.path.join(self.directory, file.name) for file in self.files]
 
-        for seq in context.selected_sequences:
+        for seq in context.scene.sequence_editor.strips_all:
             if seq.type != 'SOUND':
                 continue
-            seq: bpy.types.SoundSequence
+            
+            if not seq.select:
+                continue
+            
+            seq: bpy.types.SoundStrip
 
             file = random.choice(files)
             sound = bpy.data.sounds.load(file, check_existing=True)

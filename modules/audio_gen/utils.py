@@ -10,12 +10,12 @@ def add_sound(state: bool, trigger: TriggerCalcResult, frame: int):
         return
 
     scene = bpy.context.scene
-
+    
     folder = bpy.path.abspath(trigger.trigger.path)
     files = []
     for file in os.scandir(folder):
         files.append(file.path)
-    s = scene.sequence_editor.sequences
+    s = scene.sequence_editor.strips
     s.new_sound(trigger.name, random.choice(files), 3, frame - 1)
 
 
