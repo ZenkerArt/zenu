@@ -5,3 +5,4 @@ from .copy_constraint_layer import CopyConstraintLayer
 from .style_layer import StyleLayer
 from .bone_collections_layer import BoneCollectionLayer
 from .actions_layer import ActionsLayer
+from .game_ready_layer import GameReadyLayer

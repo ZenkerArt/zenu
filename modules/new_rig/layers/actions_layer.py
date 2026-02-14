@@ -202,6 +202,7 @@ class ActionsLayer(RigLayer):
 
     def execute(self, context: RigContext, components_layer: RigComponentsLayer):
         bpy.ops.object.mode_set(mode='POSE')
+        print(rig_action_list.prop_list)
         for prop in rig_action_list.prop_list:
             action: bpy.types.Action = prop.action
             if action is None:

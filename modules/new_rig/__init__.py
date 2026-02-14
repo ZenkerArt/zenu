@@ -1,10 +1,51 @@
 from .action_list import rig_action_list
 from ..base_operator.action_operator import ActionOperator
-from .layers import BoneCollectionLayer, BoneCollectorLayer, CopyLayer, RigComponentsLayer, CopyConstraintLayer, StyleLayer, ActionsLayer
+from .layers import BoneCollectionLayer, BoneCollectorLayer, CopyLayer, GameReadyLayer, RigComponentsLayer, CopyConstraintLayer, StyleLayer, ActionsLayer
 from .rig_lib import DepsInject, RigLayers, RigContext
 from .builtin_components import components
 from ...base_panel import BasePanel
 import bpy
+
+rig_layers_list = (
+    CopyLayer,
+    BoneCollectorLayer,
+    GameReadyLayer,
+    BoneCollectionLayer,
+    RigComponentsLayer,
+    CopyConstraintLayer,
+    ActionsLayer,
+    StyleLayer
+)
+
+
+def generate_layers():
+    layers = []
+
+    for layer in rig_layers_list:
+        if layer == RigComponentsLayer:
+            layer = layer(components)
+        else:
+            layer = layer()
+
+        layers.append(layer)
+
+    return layers
+
+
+class ZENU_OT_move_actions_to_object(bpy.types.Operator):
+    bl_label = 'Move Actions'
+    bl_idname = 'zenu.move_actions_to_object'
+
+    def execute(self, context: bpy.types.Context):
+        for key, value in context.scene.zenu_autogen_rig_action_list_property_list.items():
+            names = tuple(i for i in dir(value) if not i.startswith(
+                '_') and not i.startswith('bl') and not i.startswith('rna'))
+
+            item = context.active_object.zenu_autogen_rig_action_list_property_list
+            # for name in names:
+            # setattr(item, name, getattr(value, name))
+
+        return {'FINISHED'}
 
 
 class RigActions(ActionOperator):
@@ -102,13 +143,7 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
 
         inject = DepsInject([
             RigContext(),
-            CopyLayer(),
-            BoneCollectorLayer(),
-            BoneCollectionLayer(),
-            RigComponentsLayer(components),
-            CopyConstraintLayer(),
-            ActionsLayer(),
-            StyleLayer()
+            *generate_layers()
         ])
 
         rig_context = inject.get_by_type(RigContext)
@@ -118,12 +153,10 @@ class ZENU_OT_generate_rig(bpy.types.Operator):
 
         rig_layers = RigLayers(rig_context)
         rig_layers.add_layer(inject.get_by_type(CopyLayer))
-        rig_layers.add_layer(inject.get_by_type(BoneCollectorLayer))
-        rig_layers.add_layer(inject.get_by_type(BoneCollectionLayer))
-        rig_layers.add_layer(inject.get_by_type(RigComponentsLayer))
-        rig_layers.add_layer(inject.get_by_type(CopyConstraintLayer))
-        rig_layers.add_layer(inject.get_by_type(ActionsLayer))
-        rig_layers.add_layer(inject.get_by_type(StyleLayer))
+
+        for i in rig_layers_list:
+            rig_layers.add_layer(inject.get_by_type(i))
+
         rig_layers.execute()
         org_arm.hide_set(True)
         return {'FINISHED'}
@@ -170,11 +203,11 @@ class ZENU_PT_new_rig(BasePanel):
             return
 
         self.draw_mesh_settings(context, layout)
-
+        layout.operator(ZENU_OT_move_actions_to_object.bl_idname)
         if not isinstance(context.active_object.data, bpy.types.Armature):
             return
         obj = context.active_object
-        
+
         row = layout.row(align=True)
         row.operator(ZENU_OT_generate_rig.bl_idname)
         RigActions.draw_action(row, RigActions.action_back, 'Back')
@@ -207,6 +240,9 @@ class ZENU_PT_new_rig(BasePanel):
             header.label(text='Actions')
             if panel:
                 self.draw_actions(panel)
+                
+            for layer in rig_layers_list:
+                layer.draw(layout)
 
 
 def components_items(self, scene):
@@ -282,6 +318,7 @@ class ZenuRigShape(bpy.types.PropertyGroup):
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_new_rig,
     ZENU_OT_generate_rig,
+    ZENU_OT_move_actions_to_object,
     RigActions.gen_op(),
     ZenuRigShape,
     RigProps,
@@ -292,6 +329,8 @@ reg, unreg = bpy.utils.register_classes_factory((
 def register():
     reg()
     rig_action_list.register()
+    for layer in rig_layers_list:
+        layer.register()
     bpy.types.Object.zenu_rig_shape = bpy.props.PointerProperty(
         type=ZenuRigShape)
 
@@ -304,3 +343,5 @@ def register():
 def unregister():
     unreg()
     rig_action_list.unregister()
+    for layer in rig_layers_list:
+        layer.unregister()

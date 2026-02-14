@@ -179,12 +179,20 @@ class ZENU_random_audio_import(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         # print()
         files: list[str] = [os.path.join(self.directory, file.name) for file in self.files]
-
+        try:
+            active_meta = context.scene.sequence_editor.meta_stack[-1]
+        except IndexError:
+            self.report({'WARNING'}, 'Work only in meta strip, outside meta strip not yet implemented.')
+            return {'CANCELLED'}
+        
         for seq in context.scene.sequence_editor.strips_all:
             if seq.type != 'SOUND':
                 continue
             
             if not seq.select:
+                continue
+            
+            if seq.parent_meta() != active_meta:
                 continue
             
             seq: bpy.types.SoundStrip

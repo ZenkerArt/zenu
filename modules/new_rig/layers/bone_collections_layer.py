@@ -2,8 +2,9 @@ from collections import defaultdict
 from typing import Type
 
 import bpy
-from ..rig_lib.bone_utils import clear_bone_collection
+
 from ..rig_lib import RigBone, RigComponent, RigContext, RigLayer
+from ..rig_lib.bone_utils import clear_bone_collection
 from .rig_components_layer import RigComponentsLayer
 
 

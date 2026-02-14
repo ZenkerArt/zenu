@@ -75,6 +75,7 @@ class ZenuUIList(Generic[T]):
         assert self._property_group is not None
         self._active_prop_name = f'zenu_autogen_{self.name}_active'
         self._property_list_name = f'zenu_autogen_{self.name}_property_list'
+        
 
         idname = f'{self.name}_actions'
         op_name = f'ZENU_OT_AUTOGEN_{idname}'
@@ -102,6 +103,13 @@ class ZenuUIList(Generic[T]):
             self._property_group
         ))
 
+    def get_obj(self, ):
+        if self._active_path == bpy.types.Scene:
+            return bpy.context.scene
+
+        if self._active_path == bpy.types.Object:
+            return bpy.context.active_object
+
     def _draw(self, layout: bpy.types.UILayout, item: Any):
         pass
 
@@ -122,7 +130,8 @@ class ZenuUIList(Generic[T]):
 
     @property
     def prop_list(self) -> list[T]:
-        return getattr(bpy.context.scene, self._property_list_name)
+        
+        return getattr(self.get_obj(), self._property_list_name)
 
     def remove(self, index: int):
         self.prop_list.remove(index)
@@ -174,7 +183,7 @@ class ZenuUIList(Generic[T]):
         pass
 
     def draw_ui(self, layout: bpy.types.UILayout):
-        scene = bpy.context.scene
+        scene = self.get_obj()
         row = layout.row()
 
         row.template_list(self._ui_list_name, '',

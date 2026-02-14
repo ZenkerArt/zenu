@@ -23,11 +23,14 @@ class ActionOperator:
         return f'ZENU_OT_{convert_name(cls.__name__)}'
 
     @classmethod
-    def get_action(cls, method: Any):
+    def get_action(cls, method: Any) -> str:
         return cls._func_enum[method]
 
     @classmethod
-    def draw_action(cls, layout: bpy.types.UILayout, method: Any, text: str = '', icon: str = 'NONE'):
+    def draw_action(cls, layout: bpy.types.UILayout, method: Any, text: str = None, icon: str = 'NONE'):
+        if text is None:
+            text = cls.get_action(method).title()
+        
         op = layout.operator(cls.bl_idname(), text=text, icon=icon)
         op.action = cls.get_action(method)
         return op
