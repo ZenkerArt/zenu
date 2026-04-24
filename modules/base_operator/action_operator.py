@@ -27,11 +27,11 @@ class ActionOperator:
         return cls._func_enum[method]
 
     @classmethod
-    def draw_action(cls, layout: bpy.types.UILayout, method: Any, text: str = None, icon: str = 'NONE'):
+    def draw_action(cls, layout: bpy.types.UILayout, method: Any, text: str = None, icon: str = 'NONE', emboss: bool = True, depress: bool = False):
         if text is None:
             text = cls.get_action(method).title()
         
-        op = layout.operator(cls.bl_idname(), text=text, icon=icon)
+        op = layout.operator(cls.bl_idname(), text=text, icon=icon, emboss=emboss, depress=depress)
         op.action = cls.get_action(method)
         return op
 

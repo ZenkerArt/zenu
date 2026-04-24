@@ -163,7 +163,10 @@ class ZenuUIList(Generic[T]):
         if len(self.prop_list) <= 0:
             return None
 
-        return self.prop_list[self.index]
+        try:
+            return self.prop_list[self.index]
+        except Exception:
+            return None
 
     @property
     def prev_active(self) -> T:

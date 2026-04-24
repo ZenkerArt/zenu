@@ -1,11 +1,12 @@
 from . import (animation_utils, asset_browser_utils, audio_gen, bone_layers,
                context_pie, context_pie_new, daz_diff_utils, materials,
                mesh_utils, modifier_search, new_rig, render_settings, geo_node,
-               sequencer_utils, space_switcher, utils_panel, uv_utils, action_selector, camera_selector, new_rig, project_manager)
+               sequencer_utils, space_switcher, utils_panel, uv_utils, action_selector, action_exporter, camera_selector, new_rig, export_nodes)
 
 modules = (
     bone_layers,
     action_selector,
+    action_exporter,
     camera_selector,
     render_settings,
     new_rig,
@@ -22,6 +23,6 @@ modules = (
     materials,
     mesh_utils,
     daz_diff_utils,
-    project_manager,
+    export_nodes,
     geo_node
 )

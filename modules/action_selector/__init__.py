@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from gettext import find
 from ...base_panel import BasePanel
+from . import action_export
 import bpy
 
 
@@ -16,6 +17,7 @@ def add_empty(name: str):
     return empty
 
 
+
 class AC_Action(bpy.types.PropertyGroup):
     name: str
     action: bpy.props.PointerProperty(type=bpy.types.Action)
@@ -28,29 +30,6 @@ class ZENU_UL_action_selector(bpy.types.UIList):
     def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data, item: AC_Action, icon, active_data, active_propname):
         layout.prop(item, 'name', text='', emboss=False)
         # layout.prop(item, 'action', text='', emboss=False)
-
-
-class ZENU_OT_clear_nla(bpy.types.Operator):
-    bl_label = 'Clear NLA'
-    bl_idname = 'zenu.clear_nla'
-    bl_options = {'UNDO'}
-
-    def execute(self, context: bpy.types.Context):
-        for obj in bpy.data.objects:
-            if obj.animation_data is None:
-                continue
-
-            tracks = obj.animation_data.nla_tracks
-
-            for track in tracks:
-                if len(track.strips) <= 0:
-                    tracks.remove(track)
-
-            if len(tracks) <= 0 and obj.animation_data.action is None:
-                obj.animation_data_clear()
-                continue
-
-        return {'FINISHED'}
 
 
 class ZENU_OT_action_selector_operations(bpy.types.Operator):
@@ -412,15 +391,12 @@ class ZENU_PT_action_selector(BasePanel):
 
         self.draw_settings(layout)
 
-        layout.operator(ZENU_OT_clear_nla.bl_idname)
-
 
 reg, unreg = bpy.utils.register_classes_factory((
     ZENU_PT_action_selector,
     ZENU_OT_action_selector_operations,
     ZENU_OT_action_selector_item_operations,
     ZENU_OT_copy_nla_strip_settings,
-    ZENU_OT_clear_nla,
     AC_Action,
     ZENU_UL_action_selector
 ))
@@ -433,7 +409,9 @@ def register():
     bpy.types.Scene.zenu_action_selector = bpy.props.CollectionProperty(
         type=AC_Action)
     bpy.types.Scene.zenu_action_selector_active = bpy.props.IntProperty()
+    # action_export.register()
 
 
 def unregister():
     unreg()
+    # action_export.unregister()
