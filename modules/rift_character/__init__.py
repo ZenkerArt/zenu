@@ -81,12 +81,13 @@ def preset_setter(category: str):
         prev_value = self.id_data.get(f'{category}_preset') or 0
 
         objects: list[bpy.types.Object] = get_objects_by_armature(self.armature_object)
-        shape_prop = face_conf.get_by_enum_index(category, prev_value)
 
-        shape_keys = shape_prop.get_object_shapes(objects)
+        for shape_prop in face_conf.get_by_category(category):
+            # shape_prop = face_conf.get_by_enum_index(category, prev_value)
+            shape_keys = shape_prop.get_object_shapes(objects)
 
-        for shape_key, prop in shape_keys:
-            shape_key.value = 0
+            for shape_key, prop in shape_keys:
+                shape_key.value = 0
 
         self.id_data[f'{category}_preset'] = value
 

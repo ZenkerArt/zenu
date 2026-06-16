@@ -14,7 +14,8 @@ class BaseListAction:
 
 
 class ZENU_UL_base_list(bpy.types.UIList):
-    def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data, item, icon, active_data, active_propname):
+    def draw_item(self, context: bpy.types.Context, layout: bpy.types.UILayout, data, item, icon, active_data,
+                  active_propname):
         self.custom_draw(layout, item)
 
 
@@ -75,7 +76,6 @@ class ZenuUIList(Generic[T]):
         assert self._property_group is not None
         self._active_prop_name = f'zenu_autogen_{self.name}_active'
         self._property_list_name = f'zenu_autogen_{self.name}_property_list'
-        
 
         idname = f'{self.name}_actions'
         op_name = f'ZENU_OT_AUTOGEN_{idname}'
@@ -126,11 +126,16 @@ class ZenuUIList(Generic[T]):
         if new_index >= length:
             new_index = length - 1
 
+        prev = self._index
         self._index = new_index
+
+        if prev != new_index:
+            self._on_select()
+            print(123)
 
     @property
     def prop_list(self) -> list[T]:
-        
+
         return getattr(self.get_obj(), self._property_list_name)
 
     def remove(self, index: int):
@@ -205,6 +210,7 @@ class ZenuUIList(Generic[T]):
 
     def _setter(self, scene, value: int):
         self._prev_active = self.index
+
         self.index = value
         return None
 

@@ -76,6 +76,9 @@ class Presets:
     def get_by_name(self, name: str):
         return self._presets_name.get(name)
 
+    def get_by_category(self, category: str):
+        return self._cat_split[category]
+
     def get_dynamic_enum(self, category: str):
         def func(s, context):
             return [(i.name, i.name, '') for i in self._cat_split[category]]
