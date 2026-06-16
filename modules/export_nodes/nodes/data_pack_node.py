@@ -1,6 +1,7 @@
 import bpy
 from .base_node import BaseNode
-from .. import ObjectSocketType, node_categories
+from .. import node_categories
+from ..sockets.object_socket import ObjectSocketType
 
 
 class DataPackNode(BaseNode):

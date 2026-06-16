@@ -2,6 +2,14 @@ import bpy
 from .utils import is_type
 
 
+class RiftBasePanel(bpy.types.Panel):
+
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Rift'
+    bl_context = 'objectmode'
+    bl_options = {'DEFAULT_CLOSED'}
+
 class BasePanelProperty(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'

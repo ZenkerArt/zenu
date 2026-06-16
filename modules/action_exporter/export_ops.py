@@ -89,7 +89,7 @@ class ActionExportOps(ActionOperator):
         for obj_name in delete_list:
             del data.objects[obj_name]
 
-        item.data = data.to_json()
+        item.data = data.to_dict()
         return objs
 
     def apply_bones_mask(self, target_obj: bpy.types.Object, action: bpy.types.Action):
@@ -158,7 +158,7 @@ class ActionExportOps(ActionOperator):
         else:
             data.objects[name] = ActionExportObject(slot=self.slot).to_dict()
 
-        item.data = data.to_json()
+        item.data = data.to_dict()
 
     def create_edit_data(self):
         return {

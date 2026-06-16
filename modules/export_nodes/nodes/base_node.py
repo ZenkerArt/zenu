@@ -3,13 +3,17 @@ from typing import Any
 
 import bpy
 
-# from .. import ZENU_OT_add_socket
-from ..sockets import ObjectSocketType, sockets
+
+# from ..sockets import sockets
 
 
 class BaseNode(bpy.types.Node):
     bl_idname = "BaseNode"
     bl_label = "Base Node"
+    context: dict[Any, Any]
+
+    def get_dependencies(self, ctx):
+        return []
 
     def _pre_compute(self, **inputs):
         return self._post_compute(self.compute(**inputs))
@@ -19,6 +23,22 @@ class BaseNode(bpy.types.Node):
 
     def compute(self, **inputs):
         return inputs
+
+    def get_input_link(self, name: str, link_index: int = 0) -> bpy.types.NodeLink | None:
+        try:
+            return self.inputs[name].links[link_index]
+        except IndexError:
+            return None
+        except KeyError:
+            return None
+
+    def get_output_link(self, name: str, link_index: int = 0) -> bpy.types.NodeLink | None:
+        try:
+            return self.outputs[name].links[link_index]
+        except IndexError:
+            return None
+        except KeyError:
+            return None
 
     def restore_links(self, old_links_data):
         tree = self.id_data
@@ -83,16 +103,16 @@ class SimpleNode(BaseNode):
     def init(self, context):
         sig = inspect.signature(self.compute)
 
-        type_map = {s.map_type: s for s in sockets}
-
-        for name, param in sig.parameters.items():
-            annotation = param.annotation
-            self.inputs.new(type_map.get(annotation).bl_idname, name)
-
-        for name, param in inspect.signature(sig.return_annotation).parameters.items():
-            annotation = param.annotation
-            socket = self.outputs.new(type_map.get(annotation).bl_idname, name)
-            socket.hide_value = True
+        # type_map = {s.map_type: s for s in sockets}
+        #
+        # for name, param in sig.parameters.items():
+        #     annotation = param.annotation
+        #     self.inputs.new(type_map.get(annotation).bl_idname, name)
+        #
+        # for name, param in inspect.signature(sig.return_annotation).parameters.items():
+        #     annotation = param.annotation
+        #     socket = self.outputs.new(type_map.get(annotation).bl_idname, name)
+        #     socket.hide_value = True
 
     def _pre_compute(self, **inputs):
         sig = inspect.signature(self.compute)
@@ -102,8 +122,3 @@ class SimpleNode(BaseNode):
                 inputs[name] = self.inputs.get(name).value
 
         return self._post_compute(self.compute(**inputs))
-
-
-
-
-

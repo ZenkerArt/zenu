@@ -4,7 +4,7 @@ from json import dumps, loads, JSONDecodeError
 import bpy
 from .base_node import BaseNode
 from .. import node_categories
-from ..sockets import MaskTypeSocket
+from ..sockets.mask_socket import MaskTypeSocket
 from ..utils import object_filter_static, ObjectTypes
 
 
@@ -22,7 +22,7 @@ class ZENU_OT_bone_mask_set_from_selection(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         node_tree = bpy.data.node_groups[self.node_tree]
-        node = node_tree.nodes[self.node]
+        node = node_tree.users[self.node]
 
         bone_list = []
 

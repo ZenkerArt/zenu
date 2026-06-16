@@ -124,21 +124,7 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
     bl_label = 'Set Final'
     bl_idname = 'zenu.set_final_settings'
     
-    filename_ext = ""
-    filepath: bpy.props.StringProperty(subtype='FILE_PATH', options={'SKIP_SAVE'}, default='')
-    
-    def invoke(self, context, event):
-        self.filepath = ''
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-    
     def execute(self, context: bpy.types.Context):
-        file_dir = os.path.dirname(self.filepath)
-        try:
-            file_dir = os.path.join(bpy.path.relpath(file_dir), '\\')
-        except Exception:
-            pass
-        
         scene = context.scene
         render = scene.render
         settings: RenderSetupSettings = bpy.context.scene.zenu_render_setup
@@ -153,8 +139,6 @@ class ZENU_OT_set_final_settings(bpy.types.Operator):
         bpy.context.scene.render.image_settings.media_type = 'IMAGE'
         render.image_settings.file_format = 'PNG'
         render.image_settings.compression = 15
-
-        render.filepath = file_dir
 
         match settings.render_type:
             case '2D':

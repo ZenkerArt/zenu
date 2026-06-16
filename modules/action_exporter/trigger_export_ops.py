@@ -27,7 +27,7 @@ class ActionExportTriggerOps(ActionOperator):
 
         trigger_data.save_markers()
         bpy.context.scene.timeline_markers.clear()
-        item.trigger_data = trigger_data.to_json()
+        item.trigger_data = trigger_data.to_dict()
 
     def action_remove(self, context: bpy.types.Context):
         for marker in bpy.context.scene.timeline_markers:

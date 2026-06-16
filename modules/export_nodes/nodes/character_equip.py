@@ -2,9 +2,9 @@ import bpy
 
 from .base_node import BaseNode
 from .. import node_categories
-from ..sockets import ObjectSocketType, StringTypeSocket, ObjectTypes, CharacterEquipTypeSocket, \
-    CharacterEquipmentData
-from ..utils import object_filter_static
+from ..sockets.character_equipment_socket import CharacterEquipTypeSocket, CharacterEquipData
+from ..sockets.object_socket import ObjectSocketType
+from ..utils import object_filter_static, ObjectTypes
 
 
 class CharacterEquip(BaseNode):
@@ -47,10 +47,14 @@ class CharacterEquip(BaseNode):
 
     def compute(self, **inputs):
         return {
-            'character_equipment': CharacterEquipmentData(
+            'character_equipment': CharacterEquipData(
                 name=self.name,
                 armature=self.armature,
-                object=inputs['equipment_object']
+                object=inputs['equipment_object'],
+                data={
+                    'parentType': self.parent_type,
+                    'boneName': self.bone_name
+                }
             )
         }
 

@@ -1,6 +1,11 @@
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, Iterable, Tuple
 import bpy
+
+
+class GraphExecutionDirection:
+    FORWARD = 'FORWARD'
+    BACKWARD = 'BACKWARD'
 
 
 class GraphExecutor:
@@ -8,19 +13,30 @@ class GraphExecutor:
         self.tree = node_tree
         self.context: dict[bpy.types.Node, dict[str, Any]] = {}
 
-    def collect_subgraph(self, target):
+    @staticmethod
+    def collect_subgraph(start_node, sockets_exactly=None, direction=GraphExecutionDirection.BACKWARD):
         visited = set()
-        stack = [target]
+        stack = [start_node]
 
         while stack:
             node = stack.pop()
             if node in visited:
                 continue
-            visited.add(node)
 
-            for inp in node.inputs:
-                for link in inp.links:
-                    stack.append(link.from_node)
+            visited.add(node)
+            sockets = []
+            node_dir = 'from_node' if direction == GraphExecutionDirection.BACKWARD else 'to_node'
+
+            if sockets_exactly is not None:
+                sockets = sockets_exactly
+            elif direction == GraphExecutionDirection.BACKWARD:
+                sockets = node.inputs
+            elif direction == GraphExecutionDirection.FORWARD:
+                sockets = node.outputs
+
+            for socket in sockets:
+                for link in socket.links:
+                    stack.append(getattr(link, node_dir))
 
         return visited
 
@@ -31,26 +47,30 @@ class GraphExecutor:
             if l.from_node in subgraph_nodes and l.to_node in subgraph_nodes
         )
 
-    def build_deps(self, links):
-        deps = defaultdict(set)
+    def build_graph(
+            self,
+            links: Iterable[
+                Tuple[
+                    bpy.types.Node,
+                    bpy.types.NodeSocket,
+                    bpy.types.Node,
+                    bpy.types.NodeSocket,
+                ]
+            ],
+    ):
+        deps = defaultdict(set)  # to_node depends on from_node
+        forward = defaultdict(set)  # from_node -> to_node
 
         for from_node, _, to_node, _ in links:
             deps[to_node].add(from_node)
+            forward[from_node].add(to_node)
 
-        return deps
+        return deps, forward
 
-    def topo_sort(self, deps):
-        nodes = set(deps.keys())
-        for v in deps.values():
-            nodes |= v
+    def topo_sort(self, deps, forward):
+        nodes = set(deps.keys()) | set(forward.keys())
 
-        indegree = defaultdict(int)
-        # for n in nodes:
-        #     indegree[n] = 0
-
-        for n in deps:
-            for _ in deps[n]:
-                indegree[n] += 1
+        indegree = {n: len(deps[n]) for n in nodes}
 
         q = deque([n for n in nodes if indegree[n] == 0])
         order = []
@@ -58,11 +78,11 @@ class GraphExecutor:
         while q:
             n = q.popleft()
             order.append(n)
-            for m in nodes:
-                if n in deps[m]:
-                    indegree[m] -= 1
-                    if indegree[m] == 0:
-                        q.append(m)
+
+            for m in forward[n]:
+                indegree[m] -= 1
+                if indegree[m] == 0:
+                    q.append(m)
 
         return order
 
@@ -79,15 +99,17 @@ class GraphExecutor:
         inputs = {}
 
         for socket in node.inputs:
+            socket: bpy.types.NodeSocket
+
             if not socket.links:
-                if hasattr(socket, 'value'):
+                if hasattr(socket, "value"):
                     inputs[socket.name] = socket.value
                 continue
 
-            value = self.get_link_data(socket.links[0])
-
-            if len(socket.links) > 1:
+            if socket.is_multi_input:
                 value = [self.get_link_data(link) for link in socket.links]
+            else:
+                value = self.get_link_data(socket.links[0])
 
             if value is None:
                 continue
@@ -95,18 +117,19 @@ class GraphExecutor:
             inputs[socket.name] = value
 
         if hasattr(node, "compute"):
-            return node._pre_compute(**inputs)
+            return node._pre_compute(**{**inputs, '_context': self.context})
 
         return {}
 
-    def execute(self, node: bpy.types.Node):
-        subgra = self.collect_subgraph(self.tree.nodes['Data Pack'])
-        subgra = self.build_links_for_subgraph(subgra)
+    def execute(self, node: bpy.types.Node, sockets_exactly = None, direction=GraphExecutionDirection.BACKWARD):
+        sub_nodes = self.collect_subgraph(node, sockets_exactly=sockets_exactly, direction=direction)
+        links = self.build_links_for_subgraph(sub_nodes)
 
-        deps = self.build_deps(subgra)
-        order = self.topo_sort(deps)
+        deps, forward = self.build_graph(links)
 
-        for node in order:
-            self.context[node] = self.eval_node(node)
+        order = self.topo_sort(deps, forward)
+
+        for n in order:
+            self.context[n] = self.eval_node(n)
 
         return self.context

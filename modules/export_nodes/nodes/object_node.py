@@ -4,7 +4,7 @@ import bpy
 
 from .base_node import BaseNode
 from .. import node_categories
-from ..sockets import ObjectSocketType
+from ..sockets.object_socket import ObjectSocketType
 
 
 class ObjectNode(BaseNode):
